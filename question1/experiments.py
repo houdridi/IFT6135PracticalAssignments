@@ -1,3 +1,8 @@
+"""
+IFT 6135 - W2019 - Practical Assignment 1 - Question 1
+Assignment Instructions: https://www.overleaf.com/read/msxwmbbvfxrd
+Github Repository: https://github.com/stefanwapnick/IFT6135PracticalAssignments
+"""
 import threading
 
 import matplotlib.pyplot as plt
@@ -7,6 +12,7 @@ from activations import Sigmoid, Tanh, Relu
 from models import NN
 from preprocessing import load_mnist, ParamsSearchResults
 from weight_initialization import Normal, Glorot, Zeros
+from time import time
 
 
 def weight_initialization_test():
@@ -64,8 +70,10 @@ def parameter_search_test():
     threads = [threading.Thread(target=parameter_search_worker, args=(x_train, y_train, x_valid, y_valid, p,
                                                                       params_search_results)) for p in param_chunks]
     [t.start() for t in threads]
+    start = time()
     [t.join() for t in threads]
     params_search_results.display()
+    print("Parameter search done after %ds" % (time()-start))
 
 
 def finite_difference_gradient_test():
@@ -74,7 +82,7 @@ def finite_difference_gradient_test():
 
     x_train, y_train, x_valid, y_valid = load_mnist()
 
-    layer_config = [x_train.shape[0]] + [64, 64] + [y_train.shape[0]]
+    layer_config = [x_train.shape[0]] + [512, 256] + [y_train.shape[0]]
     nn = NN(layer_config, activation=Sigmoid)
     nn.train(x_train, y_train, x_valid, y_valid)
 

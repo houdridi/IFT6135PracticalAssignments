@@ -95,7 +95,8 @@ class NN(object):
 
         start = time()
         label = self.get_training_info_str(alpha, batch_size)
-        print("TRAINING: %s" % label)
+        if verbose:
+            print("TRAINING: %s" % label)
 
         for i in range(epochs):
             rand_order = np.random.permutation(m)
