@@ -63,23 +63,29 @@ def parameter_search():
               for b in batch_sizes for h in hidden_layers]
 
     param_chunks = [params[i::n_threads] for i in xrange(n_threads)]
-    threads = [threading.Thread(target=parameter_search_worker, args=(x_train, y_train, x_valid, y_valid, p, params_search_results)) for p in param_chunks]
+    threads = [threading.Thread(target=parameter_search_worker, args=(x_train, y_train, x_valid, y_valid, p,
+                                                                      params_search_results)) for p in param_chunks]
     [t.start() for t in threads]
     [t.join() for t in threads]
     params_search_results.display()
 
-    # for (g, h, a, b) in params:
-    #     layer_config = [x_train.shape[0]] + h + [y_train.shape[0]]
-    #     nn = NN(layer_config, activation=g)
-    #     nn.train(x_train, y_train, x_valid, y_valid, alpha=a, batch_size=b, verbose=False)
-    #     cost, accuracy = nn.test(x_valid, y_valid)
-    #     params_search_results.insert(nn, a, b, accuracy)
-
-    # params_search_results.display()
-
 
 def debug_gradients():
-    pass
+    # Fixed random seed for reproducibility
+    np.random.seed(1)
+
+    x_train, y_train, x_valid, y_valid = load_mnist()
+
+    layer_config = [x_train.shape[0]] + [512, 256] + [y_train.shape[0]]
+    nn = NN(layer_config, activation=Sigmoid)
+    nn.train(x_train, y_train, x_valid, y_valid)
+
+    m = 10; n = 5
+    idx = np.argwhere(x_train[:, 0] > 0)[:m]
+
+    eps = np.reciprocal(10.**(np.arange(n)+1))
+    for i, e in enumerate(eps):
+
 
 
 if __name__ == '__main__':

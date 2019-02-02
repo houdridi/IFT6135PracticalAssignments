@@ -67,7 +67,7 @@ class NN(object):
                % (self.activation.__name__, self.weight_init.__name__,
                   '-'.join([str(l) for l in self.layer_dims]), alpha, batch_size)
 
-    def train(self, x_train, y_train, x_valid, y_valid, alpha=1, epochs=10, batch_size=128, verbose=True):
+    def train(self, x_train, y_train, x_valid, y_valid, alpha=0.1, epochs=10, batch_size=128, verbose=True):
 
         self.initialize_weights()
         m = x_train.shape[1]
