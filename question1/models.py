@@ -67,6 +67,24 @@ class NN(object):
                % (self.activation.__name__, self.weight_init.__name__,
                   '-'.join([str(l) for l in self.layer_dims]), alpha, batch_size)
 
+    def debug_gradient(self, x_sample, y_sample, eps, index):
+        # Get coordinates of weight to debug: (layer_idx, neuron_idx, input_idx)
+        (l, n, i) = index
+        weight_i = self.w[l][n][i]
+
+        self.w[l][n][i] = weight_i - eps
+        z, a = self.forward(x_sample)
+        train_cost_neg_eps = self.loss(y_sample, a[self.layers - 1])
+
+        self.w[l][n][i] = weight_i + eps
+        z, a = self.forward(x_sample)
+        train_cost_pos_eps = self.loss(y_sample, a[self.layers - 1])
+
+        self.w[l][n][i] = weight_i
+        z, a = self.forward(x_sample)
+        dw, db = self.backward(z, a, y_sample)
+        return abs((train_cost_pos_eps - train_cost_neg_eps) / (2 * eps) - dw[1][n][i])
+
     def train(self, x_train, y_train, x_valid, y_valid, alpha=0.1, epochs=10, batch_size=128, verbose=True):
 
         self.initialize_weights()

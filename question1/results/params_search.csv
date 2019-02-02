@@ -1,8 +1,6 @@
 label,activation,weight_init,layers,alpha,batch,acc
-"g=Relu,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=64",Relu,Glorot,784-512-256-10,0.1,64,0.98
 "g=Relu,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=128",Relu,Glorot,784-512-256-10,0.1,128,0.979
 "g=Relu,w_init=Glorot,layers=784-512-512-10,alpha=0.10,batch=128",Relu,Glorot,784-512-512-10,0.1,128,0.9765
-"g=Tanh,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=64",Tanh,Glorot,784-512-256-10,0.1,64,0.976
 "g=Relu,w_init=Glorot,layers=784-256-512-10,alpha=0.10,batch=128",Relu,Glorot,784-256-512-10,0.1,128,0.9759
 "g=Relu,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=256",Relu,Glorot,784-512-256-10,0.1,256,0.9719
 "g=Tanh,w_init=Glorot,layers=784-512-512-10,alpha=0.10,batch=128",Tanh,Glorot,784-512-512-10,0.1,128,0.9716
@@ -13,7 +11,6 @@ label,activation,weight_init,layers,alpha,batch,acc
 "g=Tanh,w_init=Glorot,layers=784-256-512-10,alpha=0.10,batch=256",Tanh,Glorot,784-256-512-10,0.1,256,0.9567
 "g=Tanh,w_init=Glorot,layers=784-512-512-10,alpha=0.10,batch=256",Tanh,Glorot,784-512-512-10,0.1,256,0.9566
 "g=Tanh,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=256",Tanh,Glorot,784-512-256-10,0.1,256,0.9564
-"g=Relu,w_init=Glorot,layers=784-16-16-10,alpha=0.10,batch=64",Relu,Glorot,784-16-16-10,0.1,64,0.9526
 "g=Relu,w_init=Glorot,layers=784-512-256-10,alpha=0.01,batch=128",Relu,Glorot,784-512-256-10,0.01,128,0.9383
 "g=Relu,w_init=Glorot,layers=784-512-512-10,alpha=0.01,batch=128",Relu,Glorot,784-512-512-10,0.01,128,0.9366
 "g=Relu,w_init=Glorot,layers=784-256-512-10,alpha=0.01,batch=128",Relu,Glorot,784-256-512-10,0.01,128,0.9333
