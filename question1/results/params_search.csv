@@ -1,0 +1,10 @@
+label,activation,weight_init,layers,alpha,batch,acc
+"g=Relu,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=64",Relu,Glorot,784-512-256-10,0.1,64,0.98
+"g=Relu,w_init=Glorot,layers=784-256-512-10,alpha=0.10,batch=128",Relu,Glorot,784-256-512-10,0.1,128,0.9772
+"g=Tanh,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=64",Tanh,Glorot,784-512-256-10,0.1,64,0.976
+"g=Relu,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=128",Relu,Glorot,784-512-256-10,0.1,128,0.9752
+"g=Tanh,w_init=Glorot,layers=784-256-512-10,alpha=0.10,batch=128",Tanh,Glorot,784-256-512-10,0.1,128,0.9713
+"g=Tanh,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=128",Tanh,Glorot,784-512-256-10,0.1,128,0.9694
+"g=Relu,w_init=Glorot,layers=784-16-16-10,alpha=0.10,batch=64",Relu,Glorot,784-16-16-10,0.1,64,0.9526
+"g=Sigmoid,w_init=Glorot,layers=784-256-512-10,alpha=0.10,batch=128",Sigmoid,Glorot,784-256-512-10,0.1,128,0.9195
+"g=Sigmoid,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=128",Sigmoid,Glorot,784-512-256-10,0.1,128,0.9178

@@ -76,7 +76,8 @@ class NN(object):
         validation_cost = np.zeros(epochs)
 
         start = time()
-        print("TRAINING: %s" % self.get_training_info_str(alpha, batch_size))
+        label = self.get_training_info_str(alpha, batch_size)
+        print("TRAINING: %s" % label)
 
         for i in range(epochs):
             rand_order = np.random.permutation(m)
@@ -99,5 +100,5 @@ class NN(object):
             if verbose:
                 print("Epoch %d: TrainingCost=%f, ValidationCost=%f" % (i + 1, train_cost[i], validation_cost[i]))
 
-        print("DONE (took %ds): %s" % (time() - start, self.get_training_info_str(alpha, batch_size)))
+        print("DONE after %ds: %s - cost=%f" % (time() - start, label, validation_cost[-1]))
         return train_cost, validation_cost

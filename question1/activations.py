@@ -6,13 +6,13 @@ class Tanh(object):
     @staticmethod
     def f(z):
         exp_plus = np.exp(z)
-        exp_neg = 1 / exp_plus
+        exp_neg = 1. / exp_plus
         return (exp_plus - exp_neg) / (exp_plus + exp_neg)
 
     @staticmethod
     def df(z):
         tanh = Tanh.f(z)
-        return 1 - tanh * tanh
+        return 1. - tanh * tanh
 
 
 class Sigmoid(object):
