@@ -11,10 +11,18 @@ class Normal(object):
 
     @staticmethod
     def init(dim_l, dim_l_prev):
+        return np.random.randn(dim_l, dim_l_prev)
+
+
+class ScaledNormal(object):
+
+    @staticmethod
+    def init(dim_l, dim_l_prev):
         return np.random.randn(dim_l, dim_l_prev) * np.sqrt(1. / dim_l_prev)
 
 
 class Glorot(object):
     @staticmethod
     def init(dim_l, dim_l_prev):
-        pass
+        d_l = np.sqrt(6.0/(dim_l+dim_l_prev))
+        return np.random.uniform(-d_l, d_l, (dim_l, dim_l_prev))

@@ -1,19 +1,20 @@
 import numpy as np
 
 from activations import Sigmoid
-from weight_initialization import Normal
+from weight_initialization import Normal, Glorot
+from time import time
+from sklearn.metrics import accuracy_score
 
 
 class NN(object):
 
-    def __init__(self, input_dim, hidden_dims, output_dim, activation=Sigmoid, weight_init=Normal):
+    def __init__(self, layers_dims, activation=Sigmoid, weight_init=Glorot):
         self.b = {}
         self.w = {}
         self.activation = activation
-        self.layer_dims = [input_dim] + hidden_dims + [output_dim]
+        self.layer_dims = layers_dims
         self.layers = len(self.layer_dims)
         self.weight_init = weight_init
-        self.initialize_weights()
 
     def loss(self, y, ypred):
         m = y.shape[1]
@@ -46,7 +47,7 @@ class NN(object):
             dz[l] = np.multiply(da[l], self.activation.df(z[l])) if l < self.layers - 1 else a[self.layers - 1] - y
             dw[l] = (1. / m_batch) * np.matmul(dz[l], a[l - 1].T)
             db[l] = (1. / m_batch) * np.sum(dz[l], axis=1, keepdims=True)
-            da[l - 1] = np.matmul(self.w[l].T, dz[l])
+            da[l - 1] = np.matmul(self.w[l].T, dz[l]) if l > 1 else 0
         return dw, db
 
     def update(self, dw, db, alpha):
@@ -54,16 +55,28 @@ class NN(object):
             self.w[l] = self.w[l] - alpha * dw[l]
             self.b[l] = self.b[l] - alpha * db[l]
 
-    def test(self, X, y):
-        z, a = self.forward(X)
+    def test(self, x, y):
+        z, a = self.forward(x)
         y_pred = a[self.layers - 1]
         cost = self.loss(y, y_pred)
-        return cost, y_pred
+        accuracy = accuracy_score(np.argmax(y, axis=0), np.argmax(y_pred, axis=0))
+        return cost, accuracy
 
-    def train(self, x_train, y_train, x_valid, y_valid, alpha=1, epochs=10, batch_size=128):
+    def get_training_info_str(self, alpha, batch_size):
+        return u'g=%s, w_init=%s, layers=%s, \u03B1=%.2f, batch=%d' \
+               % (self.activation.__name__, self.weight_init.__name__,
+                  '-'.join([str(l) for l in self.layer_dims]), alpha, batch_size)
 
+    def train(self, x_train, y_train, x_valid, y_valid, alpha=1, epochs=10, batch_size=128, verbose=True):
+
+        self.initialize_weights()
         m = x_train.shape[1]
         n_batches = int(np.ceil(float(m) / batch_size))
+        train_cost = np.zeros(epochs)
+        validation_cost = np.zeros(epochs)
+
+        start = time()
+        print("TRAINING: %s" % self.get_training_info_str(alpha, batch_size))
 
         for i in range(epochs):
             rand_order = np.random.permutation(m)
@@ -80,8 +93,11 @@ class NN(object):
                 dw, db = self.backward(z, a, y_batch)
                 self.update(dw, db, alpha)
 
-            train_cost, _ = self.test(x_train, y_train)
-            validation_cost, _ = self.test(x_valid, y_valid)
-            print("Epoch %d: TrainingCost = %f, ValidationCost=%f" % (i + 1, train_cost, validation_cost))
+            train_cost[i], _ = self.test(x_train, y_train)
+            validation_cost[i], _ = self.test(x_valid, y_valid)
 
-        print("Done.")
+            if verbose:
+                print("Epoch %d: TrainingCost=%f, ValidationCost=%f" % (i + 1, train_cost[i], validation_cost[i]))
+
+        print("DONE (took %ds): %s" % (time() - start, self.get_training_info_str(alpha, batch_size)))
+        return train_cost, validation_cost
