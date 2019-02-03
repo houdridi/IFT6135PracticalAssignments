@@ -15,6 +15,19 @@ from weight_initialization import Normal, Glorot, Zeros
 from time import time
 
 
+def run_and_plot_results(nn, x_train, y_train, x_valid, y_valid, alpha, batch_size, save_figure=False):
+    train_cost, validation_cost = nn.train(x_train, y_train, x_valid, y_valid, alpha=alpha, batch_size=batch_size)
+    plt.plot(np.arange(len(train_cost)) + 1, train_cost, label='Training Set')
+    plt.plot(np.arange(len(train_cost)) + 1, validation_cost, label='Validation Set')
+    plt.title(nn.get_training_info_str(alpha, batch_size))
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.legend(loc="upper right")
+    if save_figure:
+        plt.savefig('results/weight_init_%s.png' % nn.weight_init.__name__)
+    plt.show()
+
+
 def weight_initialization_test():
     # Fixed random seed for reproducibility
     np.random.seed(1)
@@ -30,15 +43,7 @@ def weight_initialization_test():
     ]
 
     for nn in models:
-        train_cost, validation_cost = nn.train(x_train, y_train, x_valid, y_valid, alpha=alpha, batch_size=batch_size)
-        plt.plot(np.arange(len(train_cost)) + 1, train_cost, label='Training Set')
-        plt.plot(np.arange(len(train_cost)) + 1, validation_cost, label='Validation Set')
-        plt.title(nn.get_training_info_str(alpha, batch_size))
-        plt.xlabel("Epochs")
-        plt.ylabel("Loss")
-        plt.legend(loc="upper right")
-        # plt.savefig('results/weight_init_%s.png' % nn.weight_init.__name__)
-        plt.show()
+        run_and_plot_results(nn, x_train, y_train, x_valid, y_valid, alpha, batch_size)
 
 
 def parameter_search_worker(x_train, y_train, x_valid, y_valid, params, params_search_results):
@@ -50,7 +55,7 @@ def parameter_search_worker(x_train, y_train, x_valid, y_valid, params, params_s
         params_search_results.insert(nn, a, b, accuracy)
 
 
-def parameter_search_test():
+def parameter_search_test(n_threads=1):
     # Fixed random seed for reproducibility
     np.random.seed(1)
     x_train, y_train, x_valid, y_valid = load_mnist()
@@ -60,23 +65,26 @@ def parameter_search_test():
     alphas = [0.1, 0.01]
     batch_sizes = [128, 256]
     hidden_layers = [[512, 256], [256, 512], [512, 512]]
-    n_threads = 4
 
     params = [(g, h, a, b)
               for g in activations for a in alphas
               for b in batch_sizes for h in hidden_layers]
 
-    param_chunks = [params[i::n_threads] for i in xrange(n_threads)]
-    threads = [threading.Thread(target=parameter_search_worker, args=(x_train, y_train, x_valid, y_valid, p,
-                                                                      params_search_results)) for p in param_chunks]
-    [t.start() for t in threads]
-    start = time()
-    [t.join() for t in threads]
+    if n_threads > 1:
+        param_chunks = [params[i::n_threads] for i in xrange(n_threads)]
+        threads = [threading.Thread(target=parameter_search_worker, args=(x_train, y_train, x_valid, y_valid, p,
+                                                                          params_search_results)) for p in param_chunks]
+        [t.start() for t in threads]
+        start = time()
+        [t.join() for t in threads]
+        print("Parameter search done after %ds" % (time() - start))
+    else:
+        parameter_search_worker(x_train, y_train, x_valid, y_valid, params, params_search_results)
+
     params_search_results.display()
-    print("Parameter search done after %ds" % (time()-start))
 
 
-def finite_difference_gradient_test():
+def finite_difference_gradient_test(save_figure=False):
     # Fixed random seed for reproducibility
     np.random.seed(1)
 
@@ -103,5 +111,6 @@ def finite_difference_gradient_test():
     plt.title('Max Error in Gradient For First 10 Weights vs. N')
     plt.xlabel("N")
     plt.ylabel("Error")
-    # plt.savefig('results/gradient_difference.png')
+    if save_figure:
+        plt.savefig('results/gradient_difference.png')
     plt.show()
