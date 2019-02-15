@@ -87,7 +87,7 @@ def finite_difference_gradient_test():
 
 def build_model_test():
     train_set, valid_set, _ = load_mnist()
-    nn = NNFactory.create(hidden_dims=[512, 256], activation=Sigmoid, weight_init=Glorot)
+    nn = NNFactory.create(hidden_dims=[512, 256], activation=Tanh, weight_init=Normal)
     stats = nn.train(train_set, valid_set, alpha=0.1, batch_size=128)
     plot_training_stats(stats, plot_title=nn.training_info_label, plot_acc=True)
 

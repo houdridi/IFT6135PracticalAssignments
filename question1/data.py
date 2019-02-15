@@ -86,6 +86,7 @@ class ResultsCache(object):
         """
         Displays all results stored in the result cache
         """
+        print('\nParameter Search Results Summary:')
         print(self.df.drop('label', 1))
 
     def insert(self, nn, alpha, batch, acc):
