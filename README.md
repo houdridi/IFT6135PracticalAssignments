@@ -1,4 +1,5 @@
 # IFT6135 - Winter 2019 -Practical Assignments
+# Team Doge
 
 ## Team Members: 
 - Mohamed Amine (UdeM ID: 20150893)
