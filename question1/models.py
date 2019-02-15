@@ -26,6 +26,7 @@ class NN(object):
         self.layer_dims = layers_dims
         self.layers = len(self.layer_dims)
         self.weight_init = weight_init
+        self.training_info_label = ''
 
     def loss(self, y, ypred):
         m = y.shape[1]
@@ -111,9 +112,9 @@ class NN(object):
         valid_acc = np.zeros(epochs)
 
         start = time()
-        label = self.get_training_info_str(alpha, batch_size)
+        self.training_info_label = self.get_training_info_str(alpha, batch_size)
         if verbose:
-            print("\nTRAINING: %s" % label)
+            print("\nTRAINING: %s" % self.training_info_label)
 
         for i in range(epochs):
             rand_order = np.random.permutation(m)
@@ -137,7 +138,7 @@ class NN(object):
                 print("Epoch %d: TrainLoss=%f, TrainAcc=%f, ValidLoss=%f, ValidAcc=%f"
                       % (i + 1, train_lost[i], train_acc[i], valid_lost[i], valid_acc[i]))
 
-        print("DONE after %ds: %s - ValidLoss=%f, ValidAcc=%f" % (time() - start, label,
+        print("DONE after %ds: %s - ValidLoss=%f, ValidAcc=%f" % (time() - start, self.training_info_label,
                                                                                  valid_lost[-1], valid_acc[-1]))
         return train_lost, train_acc, valid_lost, valid_acc
 

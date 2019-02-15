@@ -20,15 +20,12 @@ import numpy as np
 
 def weight_initialization_test():
     train_set, valid_set, _ = load_mnist()
-    hidden_layer_dims = [512, 256]
-    alpha = 0.1
-    batch_size = 256
     weight_inits = [Zeros, Normal, Glorot]
 
     for weight_init in weight_inits:
-        nn = NNFactory.create(hidden_layer_dims, activation=Sigmoid, weight_init=weight_init)
-        stats = nn.train(train_set, valid_set, alpha=alpha, batch_size=batch_size)
-        plot_training_stats(stats, plot_title=nn.get_training_info_str(alpha, batch_size),
+        nn = NNFactory.create(hidden_dims=[512, 256], activation=Sigmoid, weight_init=weight_init)
+        stats = nn.train(train_set, valid_set, alpha=0.1, batch_size=256)
+        plot_training_stats(stats, plot_title=nn.training_info_label,
                             save_as_file='weight_init_{}.png'.format(nn.weight_init.__name__))
 
 
@@ -37,7 +34,7 @@ def parameter_search_test():
     activations = [Sigmoid, Tanh, Relu]
     alphas = [0.1, 0.01]
     batch_sizes = [128, 256]
-    hidden_layers = [[512, 256], [512, 512], [800, 512]]
+    hidden_layers = [[512, 256], [512, 512], [784, 256]]
     weight_inits = [Glorot]
 
     train_set, valid_set, _ = load_mnist()
@@ -77,13 +74,16 @@ def finite_difference_gradient_test():
     plot_gradient_difference(N, error, 'validate_gradient.png')
 
 
-if __name__ == '__main__':
-    # Part 1 - Build model basic test
-    # train_set, valid_set, test_set = load_mnist()
-    # model = NNFactory.create(hidden_dims=[512, 256], activation=Relu, weight_init=Glorot)
-    # stats = model.train(train_set, valid_set, alpha=0.1, batch_size=128)
-    # plot_training_stats(stats, )
+def build_model_test():
+    train_set, valid_set, _ = load_mnist()
+    nn = NNFactory.create(hidden_dims=[512, 256], activation=Relu, weight_init=Glorot)
+    stats = nn.train(train_set, valid_set, alpha=0.1, batch_size=128)
+    plot_training_stats(stats, plot_title=nn.training_info_label, plot_acc=True)
 
+
+if __name__ == '__main__':
+    # Part 1 - Build model test
+    build_model_test()
     # Part 2 - Weight initialization
     weight_initialization_test()
     # Part 3 - hyperparameter search
