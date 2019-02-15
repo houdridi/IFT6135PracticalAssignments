@@ -16,7 +16,13 @@ import os
 
 
 def plot_training_stats(stats, plot_title, plot_acc=False, save_as_file=None):
-
+    """
+    Plots training statistics: training loss and accuracy, validation loss and accuracy
+    :param stats: Statistics to plot
+    :param plot_title: Title of plot
+    :param plot_acc: If accuracy should be plotted in addition to loss
+    :param save_as_file: Optional file name to save results under
+    """
     train_loss, train_acc, valid_loss, valid_acc = stats
     plt.plot(np.arange(len(train_loss)) + 1, train_loss, label='Training Set')
     plt.plot(np.arange(len(valid_loss)) + 1, valid_loss, label='Validation Set')
@@ -43,6 +49,13 @@ def plot_training_stats(stats, plot_title, plot_acc=False, save_as_file=None):
 
 
 def plot_gradient_difference(N, error, save_as_file=None):
+    """
+    Plots error between gradient computed using back-propagation and that estimated with the central
+    finite difference approximation
+    :param N: N parameter used to compute epsilon using in the central finite difference approximation. epsilon = 1/N
+    :param error: Error between gradient computed using back-propagation and that estimated using finite difference
+    :param save_as_file: Optimal file to save results under
+    """
     plt.semilogy(N, error)
     plt.title('Max Gradient Error For First 10 Weights of 2nd Layer vs. N')
     plt.xlabel("N")

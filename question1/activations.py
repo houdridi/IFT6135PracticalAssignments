@@ -13,7 +13,9 @@ import numpy as np
 
 
 class Tanh(object):
-
+    """
+    Models tanh activation function and its derivative
+    """
     @staticmethod
     def f(z):
         exp_plus = np.exp(z)
@@ -27,10 +29,12 @@ class Tanh(object):
 
 
 class Sigmoid(object):
-
+    """
+    Models sigmoid activation function and its derivative
+    """
     @staticmethod
     def f(z):
-        return 1 / (1 + np.exp(-z))
+        return 1. / (1 + np.exp(-z))
 
     @staticmethod
     def df(z):
@@ -39,11 +43,14 @@ class Sigmoid(object):
 
 
 class Relu(object):
-
+    """
+    Models relu activation function and its derivative
+    """
     @staticmethod
     def f(z):
         return np.maximum(0, z)
 
     @staticmethod
     def df(z):
+        # Return 1 for all indices where z value > 0 else 0. astype(int) will convert boolean array to 0 or 1
         return (z > 0).astype(int)

@@ -24,6 +24,10 @@ DIGITS = 10
 
 
 def download_mnist():
+    """
+    Downloads the mnist dataset (if it does not already exist)
+    :return: Raw mnist dataset
+    """
     if not os.path.exists(DATASETS_DIR):
         os.makedirs(DATASETS_DIR)
 
@@ -38,16 +42,29 @@ def download_mnist():
 
 
 def preprocess(data_set):
+    """
+    Pre-processes (x,y) values. Encodes y values as one-hot vectors.
+    Arranges x and y matrices such that samples are arranged by column
+    :param data_set: Dataset in (x,y) tuple format
+    :return: Pre-processes dataset
+    """
     x, y = data_set
     return x.T, np.eye(DIGITS)[y].T
 
 
 def load_mnist():
+    """
+    Loads and returns the mnist dataset in train_set, validation-set, test_set formats.
+    Each set is a (x,y) tuple
+    """
     train_set, validation_set, test_set = download_mnist()
     return preprocess(train_set), preprocess(validation_set), preprocess(test_set)
 
 
 class ResultsCache(object):
+    """
+    Utility class for storing results of hyper-parameter search
+    """
     FILE_PATH = './results/params_search.csv'
 
     def __init__(self, df):
@@ -56,15 +73,29 @@ class ResultsCache(object):
 
     @staticmethod
     def load():
+        """
+        Loads the results cache. If previous results stored in the .csv file
+        exist on the file-system, loads them into memory.
+        """
         df = pd.read_csv(ResultsCache.FILE_PATH) if os.path.isfile(
             ResultsCache.FILE_PATH) else pd.DataFrame(
             columns=['label', 'activation', 'weight_init', 'layers', 'alpha', 'batch', 'acc'])
         return ResultsCache(df)
 
     def display(self):
+        """
+        Displays all results stored in the result cache
+        """
         print(self.df.drop('label', 1))
 
     def insert(self, nn, alpha, batch, acc):
+        """
+        Inserts a new result into the result cache
+        :param nn: Neural network model
+        :param alpha: Learning rate used to train the model
+        :param batch: Batch size used to train the model
+        :param acc: Validation accuracy obtained after training
+        """
         label = nn.get_training_info_str(alpha, batch).replace(u'\u03B1', 'alpha').replace(' ', '')
 
         self.save_lock.acquire()

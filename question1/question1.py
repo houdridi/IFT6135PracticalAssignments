@@ -19,6 +19,9 @@ import numpy as np
 
 
 def weight_initialization_test():
+    """
+    Plots the validation and training loss for different weight initialization schemes: [Zeros, Normal, Glorot]
+    """
     train_set, valid_set, _ = load_mnist()
     weight_inits = [Zeros, Normal, Glorot]
 
@@ -30,7 +33,10 @@ def weight_initialization_test():
 
 
 def parameter_search_test():
-    # Parameters to search
+    """
+    Searches for optimal hyper-parameter settings for the model by
+    comparing the validation accuracy for different model configurations
+    """
     activations = [Sigmoid, Tanh, Relu]
     alphas = [0.1, 0.01]
     batch_sizes = [128, 256]
@@ -51,6 +57,10 @@ def parameter_search_test():
 
 
 def finite_difference_gradient_test():
+    """
+    Compares the gradient calculated by back-propagation and that estimated using the central finite
+    difference approximation for the derivative. Used to validate that gradient calculations are working as expected.
+    """
     layer = 2
     M = 10
     N = 10. ** (np.arange(5))
@@ -61,6 +71,7 @@ def finite_difference_gradient_test():
     nn = NNFactory.create(hidden_dims=[512, 256], activation=Sigmoid, weight_init=Glorot)
     nn.train((x_train, y_train), valid_set)
 
+    # Take 1 training sample to use when comparing gradient calculations
     x_sample = x_train[:, 0].reshape((-1, 1))
     y_sample = y_train[:, 0].reshape((-1, 1))
 
@@ -76,7 +87,7 @@ def finite_difference_gradient_test():
 
 def build_model_test():
     train_set, valid_set, _ = load_mnist()
-    nn = NNFactory.create(hidden_dims=[512, 256], activation=Relu, weight_init=Glorot)
+    nn = NNFactory.create(hidden_dims=[512, 256], activation=Sigmoid, weight_init=Glorot)
     stats = nn.train(train_set, valid_set, alpha=0.1, batch_size=128)
     plot_training_stats(stats, plot_title=nn.training_info_label, plot_acc=True)
 
@@ -86,7 +97,7 @@ if __name__ == '__main__':
     build_model_test()
     # Part 2 - Weight initialization
     weight_initialization_test()
-    # Part 3 - hyperparameter search
+    # # Part 3 - hyperparameter search
     parameter_search_test()
-    # Part 4 - Validate gradient using Finite difference
+    # # Part 4 - Validate gradient using Finite difference
     finite_difference_gradient_test()
