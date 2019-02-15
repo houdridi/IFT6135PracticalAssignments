@@ -13,6 +13,7 @@ The course explores both the fundamentals and recent advances in the area of dee
 - Stefan Wapnick (UdeM ID: 20143021) 
 
 ## Assignment 1: Multilayer Perceptrons and Convolutional Neural Networks
+__Implemented in Python 3__
 - Question 1: Multilayer Perceptron from scratch for MNIST dataset 
 - Question 2: CNN for MNIST dataset
 - Question 3: Dogs vs Cats Inclass Kaggle challenge for image classification
