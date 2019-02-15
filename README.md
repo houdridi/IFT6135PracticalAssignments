@@ -1,5 +1,10 @@
-# IFT6135 - Winter 2019 -Practical Assignments
-# Team Doge
+# IFT6135 - Winter 2019 - Practical Assignments
+Kaggle Team Name: __Team Doge__
+
+## Description
+This repository hosts practical assignments submitted during Winter 2019 for the deep learning class [IFT6135](https://sites.google.com/mila.quebec/ift6135/course-description).
+
+The course explores both the fundamentals and recent advances in the area of deep learning. It focuses on neural network-type models including convolutional neural networks and recurrent neural networks such as LSTMs.
 
 ## Team Members: 
 - Mohamed Amine (UdeM ID: 20150893)
