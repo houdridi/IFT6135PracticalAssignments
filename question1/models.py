@@ -113,7 +113,7 @@ class NN(object):
         start = time()
         label = self.get_training_info_str(alpha, batch_size)
         if verbose:
-            print("TRAINING: %s" % label)
+            print("\nTRAINING: %s" % label)
 
         for i in range(epochs):
             rand_order = np.random.permutation(m)
@@ -140,3 +140,19 @@ class NN(object):
         print("DONE after %ds: %s - ValidLoss=%f, ValidAcc=%f" % (time() - start, label,
                                                                                  valid_lost[-1], valid_acc[-1]))
         return train_lost, train_acc, valid_lost, valid_acc
+
+
+class NNFactory(object):
+
+    DIGITS = 10
+    MNIST_IMAGE_SIZE = 784
+
+    @staticmethod
+    def create(hidden_dims, activation=Sigmoid, weight_init=Glorot, in_dim=MNIST_IMAGE_SIZE, out_dim=DIGITS, rand_seed=1):
+
+        if rand_seed is not None:
+            # Optional seed for reproducibility of results
+            # Used when initializing random weights in neural network
+            np.random.seed(rand_seed)
+        layer_dims = [in_dim] + hidden_dims + [out_dim]
+        return NN(layer_dims, activation, weight_init)

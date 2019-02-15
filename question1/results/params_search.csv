@@ -1,8 +1,8 @@
 label,activation,weight_init,layers,alpha,batch,acc
-"g=Relu,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=128",Relu,Glorot,784-512-256-10,0.1,128,0.979
 "g=Relu,w_init=Glorot,layers=784-1024-256-10,alpha=0.10,batch=128",Relu,Glorot,784-1024-256-10,0.1,128,0.9779
 "g=Relu,w_init=Glorot,layers=784-512-512-10,alpha=0.10,batch=128",Relu,Glorot,784-512-512-10,0.1,128,0.9765
 "g=Relu,w_init=Glorot,layers=784-512-1024-10,alpha=0.10,batch=128",Relu,Glorot,784-512-1024-10,0.1,128,0.9762
+"g=Relu,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=128",Relu,Glorot,784-512-256-10,0.1,128,0.9759
 "g=Relu,w_init=Glorot,layers=784-256-512-10,alpha=0.10,batch=128",Relu,Glorot,784-256-512-10,0.1,128,0.9759
 "g=Relu,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=256",Relu,Glorot,784-512-256-10,0.1,256,0.9719
 "g=Tanh,w_init=Glorot,layers=784-512-512-10,alpha=0.10,batch=128",Tanh,Glorot,784-512-512-10,0.1,128,0.9716
@@ -23,8 +23,8 @@ label,activation,weight_init,layers,alpha,batch,acc
 "g=Relu,w_init=Glorot,layers=784-512-512-10,alpha=0.01,batch=256",Relu,Glorot,784-512-512-10,0.01,256,0.9224
 "g=Sigmoid,w_init=Glorot,layers=784-256-512-10,alpha=0.10,batch=128",Sigmoid,Glorot,784-256-512-10,0.1,128,0.9202
 "g=Relu,w_init=Glorot,layers=784-256-512-10,alpha=0.01,batch=256",Relu,Glorot,784-256-512-10,0.01,256,0.9201
-"g=Sigmoid,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=128",Sigmoid,Glorot,784-512-256-10,0.1,128,0.9195
-"g=Tanh,w_init=Glorot,layers=784-512-256-10,alpha=0.01,batch=256",Tanh,Glorot,784-512-256-10,0.01,256,0.916
+"g=Sigmoid,w_init=Glorot,layers=784-512-256-10,alpha=0.10,batch=128",Sigmoid,Glorot,784-512-256-10,0.1,128,0.9197
+"g=Tanh,w_init=Glorot,layers=784-512-256-10,alpha=0.01,batch=256",Tanh,Glorot,784-512-256-10,0.01,256,0.9159999999999999
 "g=Tanh,w_init=Glorot,layers=784-512-512-10,alpha=0.01,batch=256",Tanh,Glorot,784-512-512-10,0.01,256,0.9154
 "g=Sigmoid,w_init=Glorot,layers=784-512-512-10,alpha=0.10,batch=128",Sigmoid,Glorot,784-512-512-10,0.1,128,0.9147
 "g=Tanh,w_init=Glorot,layers=784-256-512-10,alpha=0.01,batch=256",Tanh,Glorot,784-256-512-10,0.01,256,0.9094
