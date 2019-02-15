@@ -1,3 +1,14 @@
+"""
+IFT 6135 - W2019 - Practical Assignment 1 - Question 1
+Assignment Instructions: https://www.overleaf.com/read/msxwmbbvfxrd
+Github Repository: https://github.com/stefanwapnick/IFT6135PracticalAssignments
+Developed in Python 3
+
+Mohamed Amine (UdeM ID: 20150893)
+Oussema Keskes (UdeM ID: 20145195)
+Stephan Tran (UdeM ID: 20145195)
+Stefan Wapnick (UdeM ID: 20143021)
+"""
 import numpy as np
 
 from activations import Sigmoid
@@ -67,31 +78,37 @@ class NN(object):
                % (self.activation.__name__, self.weight_init.__name__,
                   '-'.join([str(l) for l in self.layer_dims]), alpha, batch_size)
 
-    def debug_gradient(self, x_sample, y_sample, eps, index):
-        # Get coordinates of weight to debug: (layer_idx, neuron_idx, input_idx)
-        (l, n, i) = index
-        weight_i = self.w[l][n][i]
+    def estimate_finite_diff_gradient(self, x_sample, y_sample, eps, weight_index):
+        # Get coordinates of weight to estimate finite difference for: weight_index = (layer_idx, neuron_idx, input_idx)
+        # Recall weight matrix is NxM where N = # of neurons in l'th layer, M = number of inputs from previous layer
+        # Weight can be indexed by layer_idx, neuron_idx, input_idx
+        (layer_idx, neuron_idx, input_idx) = weight_index
+        weight_i = self.w[layer_idx][neuron_idx][input_idx]
 
-        self.w[l][n][i] = weight_i - eps
+        self.w[layer_idx][neuron_idx][input_idx] = weight_i - eps
         z, a = self.forward(x_sample)
         train_cost_neg_eps = self.loss(y_sample, a[self.layers - 1])
 
-        self.w[l][n][i] = weight_i + eps
+        self.w[layer_idx][neuron_idx][input_idx] = weight_i + eps
         z, a = self.forward(x_sample)
         train_cost_pos_eps = self.loss(y_sample, a[self.layers - 1])
 
-        self.w[l][n][i] = weight_i
+        self.w[layer_idx][neuron_idx][input_idx] = weight_i
         z, a = self.forward(x_sample)
         dw, db = self.backward(z, a, y_sample)
-        return abs((train_cost_pos_eps - train_cost_neg_eps) / (2 * eps) - dw[1][n][i])
+        return abs((train_cost_pos_eps - train_cost_neg_eps) / (2 * eps) - dw[layer_idx][neuron_idx][input_idx])
 
-    def train(self, x_train, y_train, x_valid, y_valid, alpha=0.1, epochs=10, batch_size=128, verbose=True):
+    def train(self, train_set, valid_set, alpha=0.1, epochs=10, batch_size=128, verbose=True):
 
         self.initialize_weights()
+        x_train, y_train = train_set
+        x_valid, y_valid = valid_set
         m = x_train.shape[1]
         n_batches = int(np.ceil(float(m) / batch_size))
-        train_cost = np.zeros(epochs)
-        validation_cost = np.zeros(epochs)
+        train_lost = np.zeros(epochs)
+        train_acc = np.zeros(epochs)
+        valid_lost = np.zeros(epochs)
+        valid_acc = np.zeros(epochs)
 
         start = time()
         label = self.get_training_info_str(alpha, batch_size)
@@ -113,11 +130,13 @@ class NN(object):
                 dw, db = self.backward(z, a, y_batch)
                 self.update(dw, db, alpha)
 
-            train_cost[i], _ = self.test(x_train, y_train)
-            validation_cost[i], _ = self.test(x_valid, y_valid)
+            train_lost[i], train_acc[i] = self.test(x_train, y_train)
+            valid_lost[i], valid_acc[i] = self.test(x_valid, y_valid)
 
             if verbose:
-                print("Epoch %d: TrainingCost=%f, ValidationCost=%f" % (i + 1, train_cost[i], validation_cost[i]))
+                print("Epoch %d: TrainLoss=%f, TrainAcc=%f, ValidLoss=%f, ValidAcc=%f"
+                      % (i + 1, train_lost[i], train_acc[i], valid_lost[i], valid_acc[i]))
 
-        print("DONE after %ds: %s - cost=%f" % (time() - start, label, validation_cost[-1]))
-        return train_cost, validation_cost
+        print("DONE after %ds: %s - ValidLoss=%f, ValidAcc=%f" % (time() - start, label,
+                                                                                 valid_lost[-1], valid_acc[-1]))
+        return train_lost, train_acc, valid_lost, valid_acc

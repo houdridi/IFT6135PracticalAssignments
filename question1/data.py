@@ -2,40 +2,52 @@
 IFT 6135 - W2019 - Practical Assignment 1 - Question 1
 Assignment Instructions: https://www.overleaf.com/read/msxwmbbvfxrd
 Github Repository: https://github.com/stefanwapnick/IFT6135PracticalAssignments
+Developed in Python 3
+
+Mohamed Amine (UdeM ID: 20150893)
+Oussema Keskes (UdeM ID: 20145195)
+Stephan Tran (UdeM ID: 20145195)
+Stefan Wapnick (UdeM ID: 20143021)
 """
 import numpy as np
 import gzip
-import cPickle as pickle
+import pickle
 import pandas as pd
 import os
+import urllib
 from threading import Lock
+
+DATASETS_DIR = 'datasets'
+MNIST_FILE_NAME = 'mnist.pkl.gz'
+MNIST_URL = 'http://deeplearning.net/data/mnist'
+DIGITS = 10
+
+
+def download_mnist():
+    if not os.path.exists(DATASETS_DIR):
+        os.makedirs(DATASETS_DIR)
+
+    save_path = os.path.join(DATASETS_DIR, MNIST_FILE_NAME)
+
+    if not os.path.exists(save_path):
+        print("Downloading MNIST dataset from %s" % MNIST_URL)
+        urllib.urlretrieve("{}/{}".format(MNIST_URL, MNIST_FILE_NAME), save_path)
+
+    with gzip.open(save_path, 'r') as f:
+        return pickle.load(f, encoding='iso-8859-1')
+
+
+def preprocess(data_set):
+    x, y = data_set
+    return x.T, np.eye(DIGITS)[y].T
 
 
 def load_mnist():
-    with gzip.open('datasets/mnist.pkl.gz', 'r') as f:
-        tr, va, te = pickle.load(f)
-
-    X_train = tr[0].T
-    X_test = va[0].T
-    y_train = tr[1]
-    y_test = va[1]
-
-    digits = 10
-    examples = y_train.shape[0]
-    test_examples = y_test.shape[0]
-
-    y_train = y_train.reshape(1, y_train.shape[0])
-    y_test = y_test.reshape(1, y_test.shape[0])
-
-    y_train = np.eye(digits)[y_train.astype('int32')]
-    y_train = y_train.T.reshape(digits, examples)
-
-    y_test = np.eye(digits)[y_test.astype('int32')]
-    y_test = y_test.T.reshape(digits, test_examples)
-    return X_train, y_train, X_test, y_test
+    train_set, validation_set, test_set = download_mnist()
+    return preprocess(train_set), preprocess(validation_set), preprocess(test_set)
 
 
-class ParamsSearchResults(object):
+class ResultsCache(object):
     FILE_PATH = './results/params_search.csv'
 
     def __init__(self, df):
@@ -44,10 +56,10 @@ class ParamsSearchResults(object):
 
     @staticmethod
     def load():
-        df = pd.read_csv(ParamsSearchResults.FILE_PATH) if os.path.isfile(
-            ParamsSearchResults.FILE_PATH) else pd.DataFrame(
+        df = pd.read_csv(ResultsCache.FILE_PATH) if os.path.isfile(
+            ResultsCache.FILE_PATH) else pd.DataFrame(
             columns=['label', 'activation', 'weight_init', 'layers', 'alpha', 'batch', 'acc'])
-        return ParamsSearchResults(df)
+        return ResultsCache(df)
 
     def display(self):
         print(self.df.drop('label', 1))
@@ -69,7 +81,7 @@ class ParamsSearchResults(object):
                 self.df = self.df.append(new_entry, ignore_index=True)
 
             self.df = self.df.sort_values(by=['acc'], ascending=False)
-            self.df.to_csv(ParamsSearchResults.FILE_PATH, index=False)
+            self.df.to_csv(ResultsCache.FILE_PATH, index=False)
 
         finally:
             self.save_lock.release()
