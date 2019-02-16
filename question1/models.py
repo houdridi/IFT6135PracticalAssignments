@@ -208,8 +208,7 @@ class NN(object):
                 print("Epoch %d: TrainLoss=%f, TrainAcc=%f, ValidLoss=%f, ValidAcc=%f"
                       % (i + 1, train_lost[i], train_acc[i], valid_lost[i], valid_acc[i]))
 
-        print("DONE after %ds: %s - ValidLoss=%f, ValidAcc=%f" % (time() - start, self.training_info_label,
-                                                                                 valid_lost[-1], valid_acc[-1]))
+        print("DONE (%ds): %s - ValidAcc=%f" % (time() - start, self.training_info_label, valid_acc[-1]))
         return train_lost, train_acc, valid_lost, valid_acc
 
 
