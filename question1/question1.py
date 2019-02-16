@@ -2,11 +2,102 @@
 IFT 6135 - W2019 - Practical Assignment 1 - Question 1
 Assignment Instructions: https://www.overleaf.com/read/msxwmbbvfxrd
 Github Repository: https://github.com/stefanwapnick/IFT6135PracticalAssignments
+Developed in Python 3
+
+Mohamed Amine (UdeM ID: 20150893)
+Oussema Keskes (UdeM ID: 20145195)
+Stephan Tran (UdeM ID: 20145195)
+Stefan Wapnick (UdeM ID: 20143021)
 """
 
-from experiments import finite_difference_gradient_test, parameter_search_test, weight_initialization_test
+from activations import Sigmoid, Tanh, Relu
+from models import NN, NNFactory
+from data import load_mnist, ResultsCache
+from weight_initialization import Normal, Glorot, Zeros
+from visualization import plot_gradient_difference, plot_training_stats
+import numpy as np
+
+
+def weight_initialization_test():
+    """
+    Plots the validation and training loss for different weight initialization schemes: [Zeros, Normal, Glorot]
+    """
+    train_set, valid_set, _ = load_mnist()
+    weight_inits = [Zeros, Normal, Glorot]
+
+    for weight_init in weight_inits:
+        nn = NNFactory.create(hidden_dims=[512, 256], activation=Sigmoid, weight_init=weight_init)
+        stats = nn.train(train_set, valid_set, alpha=0.1, batch_size=256)
+        plot_training_stats(stats, plot_title=nn.training_info_label,
+                            save_as_file='weight_init_{}.png'.format(nn.weight_init.__name__))
+
+
+def parameter_search_test():
+    """
+    Searches for optimal hyper-parameter settings for the model by
+    comparing the validation accuracy for different model configurations
+    """
+    activations = [Sigmoid, Tanh, Relu]
+    alphas = [0.1, 0.01]
+    batch_sizes = [128, 256]
+    hidden_layers = [[512, 256], [512, 512], [784, 256]]
+    weight_inits = [Glorot]
+
+    train_set, valid_set, _ = load_mnist()
+    results_cache = ResultsCache.load()
+    params = [(g, h, a, b, w)
+              for g in activations for a in alphas for b in batch_sizes
+              for h in hidden_layers for w in weight_inits]
+
+    for (g, h, a, b, w) in params:
+        nn = NNFactory.create(h, activation=g, weight_init=w)
+        _, _, _, valid_acc = nn.train(train_set, valid_set, alpha=a, batch_size=b, verbose=False)
+        results_cache.insert(nn, a, b, valid_acc[-1])
+    results_cache.display()
+
+
+def finite_difference_gradient_test():
+    """
+    Compares the gradient calculated by back-propagation and that estimated using the central finite
+    difference approximation for the derivative. Used to validate that gradient calculations are working as expected.
+    """
+    layer = 2
+    M = 10
+    N = 10. ** (np.arange(5))
+    epsilons = np.reciprocal(N)
+    error = np.zeros(len(epsilons))
+
+    (x_train, y_train), valid_set, _ = load_mnist()
+    nn = NNFactory.create(hidden_dims=[512, 256], activation=Sigmoid, weight_init=Glorot)
+    nn.train((x_train, y_train), valid_set)
+
+    # Take 1 training sample to use when comparing gradient calculations
+    x_sample = x_train[:, 0].reshape((-1, 1))
+    y_sample = y_train[:, 0].reshape((-1, 1))
+
+    for i_eps, eps in enumerate(epsilons):
+        for idx in range(M):
+            # weight idx = layer #, neuron #, weight # for neuron
+            # Inspect 10 first weights of 2nd layer, 1st neuron
+            weight_idx = (layer, 0, idx)
+            gradient_error = nn.estimate_finite_diff_gradient(x_sample, y_sample, eps, weight_idx)
+            error[i_eps] = max(error[i_eps], gradient_error)
+    plot_gradient_difference(N, error, 'validate_gradient.png')
+
+
+def build_model_test():
+    train_set, valid_set, _ = load_mnist()
+    nn = NNFactory.create(hidden_dims=[512, 256], activation=Tanh, weight_init=Normal)
+    stats = nn.train(train_set, valid_set, alpha=0.1, batch_size=128)
+    plot_training_stats(stats, plot_title=nn.training_info_label, plot_acc=True)
+
 
 if __name__ == '__main__':
+    # Part 1 - Build model test
+    build_model_test()
+    # Part 2 - Weight initialization
     weight_initialization_test()
+    # # Part 3 - hyperparameter search
     parameter_search_test()
+    # # Part 4 - Validate gradient using Finite difference
     finite_difference_gradient_test()
