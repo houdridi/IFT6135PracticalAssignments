@@ -266,12 +266,22 @@ class MultiHeadedAttention(nn.Module):
         # Note: the only Pytorch modules you are allowed to use are nn.Linear 
         # and nn.Dropout
 
-        self.linear = nn.Linear(n_units,n_units)
+        self.lin_query = nn.Linear(n_units,n_units)
+        self.lin_key = nn.Linear(n_units,n_units)
+        self.lin_value = nn.Linear(n_units,n_units)
+        self.lin_out = nn.Linear(n_units,n_units)
+        
         self.dropout = nn.Dropout(dropout)
         
-        # VERIFY IF THIS FUNCTION IS ALLOWED
-        self.linear.weight.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
-        self.linear.bias.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
+        # VERIFY IF FUNCTION IS ALLOWED
+        self.lin_query.weight.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
+        self.lin_query.bias.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))        
+        self.lin_key.weight.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
+        self.lin_key.bias.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))       
+        self.lin_value.weight.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
+        self.lin_value.bias.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units)) 
+        self.lin_out.weight.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
+        self.lin_out.bias.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
         
     def forward(self, query, key, value, mask=None):
         # TODO: implement the masked multi-head attention.
@@ -287,9 +297,9 @@ class MultiHeadedAttention(nn.Module):
         nb_batch = query.size(0)
         
         # Compute linear system for query, key and value
-        Qo = self.linear(query).view(nb_batch, -1, self.n_heads, self.d_k)
-        Ko = self.linear(key).view(nb_batch, -1, self.n_heads, self.d_k)
-        Vo = self.linear(value).view(nb_batch, -1, self.n_heads, self.d_k)
+        Qo = self.lin_query(query).view(nb_batch, -1, self.n_heads, self.d_k)
+        Ko = self.lin_key(key).view(nb_batch, -1, self.n_heads, self.d_k)
+        Vo = self.lin_value(value).view(nb_batch, -1, self.n_heads, self.d_k)
         # print(self.n_units)
         # print(query.size())
         # print(value.size())
@@ -325,7 +335,7 @@ class MultiHeadedAttention(nn.Module):
         # print(H.size())
         
         # Linear layer
-        Ao = self.linear(H)
+        Ao = self.lin_out(H)
         # print(Ao.size())
         
         return Ao # size: (batch_size, seq_len, self.n_units)
