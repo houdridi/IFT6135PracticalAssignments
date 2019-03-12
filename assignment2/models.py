@@ -257,13 +257,21 @@ class MultiHeadedAttention(nn.Module):
         self.d_k = n_units // n_heads
         # This requires the number of n_heads to evenly divide n_units.
         assert n_units % n_heads == 0
-        self.n_units = n_units 
+        self.n_heads = n_heads
+        self.n_units = n_units
 
         # TODO: create/initialize any necessary parameters or layers
         # Initialize all weights and biases uniformly in the range [-k, k],
         # where k is the square root of 1/n_units.
         # Note: the only Pytorch modules you are allowed to use are nn.Linear 
         # and nn.Dropout
+
+        self.linear = nn.Linear(n_units,n_units)
+        self.dropout = nn.Dropout(dropout)
+        
+        # VERIFY IF THIS FUNCTION IS ALLOWED
+        self.linear.weight.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
+        self.linear.bias.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
         
     def forward(self, query, key, value, mask=None):
         # TODO: implement the masked multi-head attention.
@@ -273,11 +281,54 @@ class MultiHeadedAttention(nn.Module):
         # generating the "attention values" (i.e. A_i in the .tex)
         # Also apply dropout to the attention values.
 
-        return # size: (batch_size, seq_len, self.n_units)
+        
+        # [batch, seq_len, units]
+        # Keep batch size
+        nb_batch = query.size(0)
+        
+        # Compute linear system for query, key and value
+        Qo = self.linear(query).view(nb_batch, -1, self.n_heads, self.d_k)
+        Ko = self.linear(key).view(nb_batch, -1, self.n_heads, self.d_k)
+        Vo = self.linear(value).view(nb_batch, -1, self.n_heads, self.d_k)
+        # print(self.n_units)
+        # print(query.size())
+        # print(value.size())
+        # print(Qo.size())
+        # print(Vo.size())
+        # [batch, seq_len, nb_h, q_size)
+                
+        # Scaled dot-product attention
+        Ko = torch.transpose(Ko,1,2)
+        Qo = torch.transpose(Qo,1,2)
+        Vo = torch.transpose(Vo,1,2)
+        # [batch, nb_h, seq_len, q_size)
 
-
-
-
+        A = torch.matmul(Qo,Ko.transpose(-2, -1))   #[batch, nb_h, q_size, seq_len]
+        A = A/math.sqrt(self.d_k)
+        A = A.masked_fill(mask.unsqueeze(1) == 0, -1e9)
+        A = nn.functional.softmax(A, dim=-1)
+        
+        # Dropout attention values
+        A = self.dropout(A)
+        
+        # print(A.size())
+        # print(Vo.size())
+        
+        H = torch.matmul(A, Vo)
+        
+        # print(H.size())
+        
+        # Concatenate
+        # print(H.size()) #[batch, nb_h, seq_len, q_size]
+        H = H.transpose(1, 2).contiguous() \
+             .view(nb_batch, -1, self.n_units)
+        # print(H.size())
+        
+        # Linear layer
+        Ao = self.linear(H)
+        # print(Ao.size())
+        
+        return Ao # size: (batch_size, seq_len, self.n_units)
 
 
 #----------------------------------------------------------------------------------
