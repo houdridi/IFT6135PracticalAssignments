@@ -74,6 +74,7 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
     # provided clones function.
 
   def init_weights(self):
+      pass
     # TODO ========================
     # Initialize the embedding and output weights uniformly in the range [-0.1, 0.1]
     # and output biases to 0 (in place). The embeddings should not use a bias vector.
@@ -168,6 +169,7 @@ class GRU(nn.Module): # Implement a stacked GRU RNN
 
   def init_weights_uniform(self):
     # TODO ========================
+    pass
 
   def init_hidden(self):
     # TODO ========================
