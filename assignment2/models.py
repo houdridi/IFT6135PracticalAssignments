@@ -43,7 +43,30 @@ def clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
 
 # Problem 1
+
+
+class RNNLayer(nn.Module):
+
+    def __init__(self, input_size, hidden_size):
+        super(RNNLayer, self).__init__()
+        self.W = nn.Linear(input_size+hidden_size, hidden_size)
+        self.tanh = nn.Tanh()
+        self.hidden_size = hidden_size
+
+    def forward(self, x, h):
+        return self.tanh(self.W(torch.cat((x, h), 1)))
+
+    def init_weights(self):
+        d = 1. / math.sqrt(self.hidden_size)
+        torch.nn.init.uniform_(self.W.weight, -d, d)
+        torch.nn.init.uniform_(self.W.bias, -d, d)
+
+
+
 class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities.
+
+
+
   def __init__(self, emb_size, hidden_size, seq_len, batch_size, vocab_size, num_layers, dp_keep_prob):
     """
     emb_size:     The number of units in the input embeddings
@@ -72,14 +95,38 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
     # for Pytorch to recognize these parameters as belonging to this nn.Module 
     # and compute their gradients automatically. You're not obligated to use the
     # provided clones function.
+    self.emb_size = emb_size
+    self.hidden_size = hidden_size
+    self.seq_len = seq_len
+    self.batch_size = batch_size
+    self.vocab_size = vocab_size
+    self.num_layers = num_layers
+    self.dp_keep_prob = dp_keep_prob
+
+    self.rnn_layers = nn.ModuleList()
+    self.dropout_layers = nn.ModuleList()
+
+    self.rnn_layers.extend([RNNLayer(emb_size if i == 0 else hidden_size, hidden_size) for i in range(num_layers)])
+    self.dropout_layers.extend([nn.Dropout(1-dp_keep_prob) for i in range(num_layers)])
+    self.output_layer = nn.Linear(hidden_size, vocab_size)
+
+    self.embedding_layer = nn.Embedding(vocab_size, emb_size)
+    self.embedding_dropout = nn.Dropout(1-dp_keep_prob)
+
+    self.init_weights()
 
   def init_weights(self):
-      pass
     # TODO ========================
     # Initialize the embedding and output weights uniformly in the range [-0.1, 0.1]
     # and output biases to 0 (in place). The embeddings should not use a bias vector.
     # Initialize all other (i.e. recurrent and linear) weights AND biases uniformly 
     # in the range [-k, k] where k is the square root of 1/hidden_size
+    torch.nn.init.uniform_(self.embedding_layer.weight, -0.1, 0.1)
+    torch.nn.init.uniform_(self.output_layer.weight, -0.1, 0.1)
+    torch.nn.init.zeros_(self.output_layer.bias)
+    for rnn_layer in self.rnn_layers:
+        rnn_layer.init_weights()
+
 
   def init_hidden(self):
     # TODO ========================
@@ -87,7 +134,8 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
     """
     This is used for the first mini-batch in an epoch, only.
     """
-    return # a parameter tensor of shape (self.num_layers, self.batch_size, self.hidden_size)
+    # a parameter tensor of shape (self.num_layers, self.batch_size, self.hidden_size)
+    return torch.zeros([self.num_layers, self.batch_size, self.hidden_size])
 
   def forward(self, inputs, hidden):
     # TODO ========================
@@ -125,7 +173,29 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
               if you are curious.
                     shape: (num_layers, batch_size, hidden_size)
     """
-    return logits.view(self.seq_len, self.batch_size, self.vocab_size), hidden
+    logits = torch.zeros([self.seq_len, self.batch_size, self.vocab_size], device=hidden.device)
+
+    embedding_output = self.embedding_layer(inputs)
+
+    # embs = self.embedding_layer(inputs) # shape: (self.seq_len, self.batch_size, self.emb_size)
+    # temp = self.embedding_dropout(embs[0])
+    # for i in range(self.seq_len):
+    #   for j in range(self.num_layers):
+    #     inp = self.embedding_dropout(embs[i]) if j==0 else outp
+    #     hid = hidden[j]
+    #     outp, hidden[j] = self.rnn_layers[j](inp = inp.clone(), hidden = hid.clone())
+    #
+    #   logits[i] = self.output_layer(outp)
+
+    for i in range(self.seq_len):
+        x = self.embedding_dropout(embedding_output[i])
+        for j in range(self.num_layers):
+            hidden[j] = self.rnn_layers[j](x, hidden[j])
+            x = self.dropout_layers[j](hidden[j])
+
+        logits[i] = self.output_layer(x)
+
+    return logits, hidden
 
   def generate(self, input, hidden, generated_seq_len):
     # TODO ========================
@@ -152,8 +222,8 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
         - Sampled sequences of tokens
                     shape: (generated_seq_len, batch_size)
     """
-   
-    return samples
+    pass
+    # return samples
 
 
 # Problem 2
