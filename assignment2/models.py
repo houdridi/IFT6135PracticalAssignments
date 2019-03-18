@@ -177,16 +177,6 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
 
     embedding_output = self.embedding_layer(inputs)
 
-    # embs = self.embedding_layer(inputs) # shape: (self.seq_len, self.batch_size, self.emb_size)
-    # temp = self.embedding_dropout(embs[0])
-    # for i in range(self.seq_len):
-    #   for j in range(self.num_layers):
-    #     inp = self.embedding_dropout(embs[i]) if j==0 else outp
-    #     hid = hidden[j]
-    #     outp, hidden[j] = self.rnn_layers[j](inp = inp.clone(), hidden = hid.clone())
-    #
-    #   logits[i] = self.output_layer(outp)
-
     for i in range(self.seq_len):
         x = self.embedding_dropout(embedding_output[i])
         for j in range(self.num_layers):
@@ -227,6 +217,33 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
 
 
 # Problem 2
+
+class GRULayer(nn.Module):
+    def __init__(self, input_size, hidden_size):
+        super(GRULayer, self).__init__()
+        self.r_linear = nn.Linear(input_size + hidden_size, hidden_size)
+        self.z_linear = nn.Linear(input_size + hidden_size, hidden_size)
+        self.W_h = nn.Linear(input_size, hidden_size)
+        self.U_h = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.hidden_size = hidden_size
+
+    def forward(self, x, h_prev):
+        combined_input = torch.cat((x, h_prev), 1)
+        z = torch.sigmoid(self.z_linear(combined_input))
+        r = torch.sigmoid(self.r_linear(combined_input))
+        h_candidate = torch.tanh(self.W_h(x) + self.U_h(r * h_prev))
+        return (1-z)*h_prev + z*h_candidate
+
+    def init_weights(self):
+        d = 1. / math.sqrt(self.hidden_size)
+        torch.nn.init.uniform_(self.r_linear.weight, -d, d)
+        torch.nn.init.uniform_(self.r_linear.bias, -d, d)
+        torch.nn.init.uniform_(self.z_linear.weight, -d, d)
+        torch.nn.init.uniform_(self.z_linear.bias, -d, d)
+        torch.nn.init.uniform_(self.W_h.weight, -d, d)
+        torch.nn.init.uniform_(self.W_h.bias, -d, d)
+        torch.nn.init.uniform_(self.U_h.weight, -d, d)
+
 class GRU(nn.Module): # Implement a stacked GRU RNN
   """
   Follow the same instructions as for RNN (above), but use the equations for 
@@ -236,22 +253,54 @@ class GRU(nn.Module): # Implement a stacked GRU RNN
     super(GRU, self).__init__()
 
     # TODO ========================
+    self.emb_size = emb_size
+    self.hidden_size = hidden_size
+    self.seq_len = seq_len
+    self.batch_size = batch_size
+    self.vocab_size = vocab_size
+    self.num_layers = num_layers
+    self.dp_keep_prob = dp_keep_prob
+
+    self.gru_layers = nn.ModuleList()
+    self.dropout_layers = nn.ModuleList()
+
+    self.gru_layers.extend([GRULayer(emb_size if i == 0 else hidden_size, hidden_size) for i in range(num_layers)])
+    self.dropout_layers.extend([nn.Dropout(1-dp_keep_prob) for i in range(num_layers)])
+    self.output_layer = nn.Linear(hidden_size, vocab_size)
+
+    self.embedding_layer = nn.Embedding(vocab_size, emb_size)
+    self.embedding_dropout = nn.Dropout(1-dp_keep_prob)
 
   def init_weights_uniform(self):
     # TODO ========================
-    pass
+    torch.nn.init.uniform_(self.embedding_layer.weight, -0.1, 0.1)
+    torch.nn.init.uniform_(self.output_layer.weight, -0.1, 0.1)
+    torch.nn.init.zeros_(self.output_layer.bias)
+    for gru_layer in self.gru_layers:
+        gru_layer.init_weights()
 
   def init_hidden(self):
     # TODO ========================
-    return # a parameter tensor of shape (self.num_layers, self.batch_size, self.hidden_size)
+    return torch.zeros([self.num_layers, self.batch_size, self.hidden_size])
 
   def forward(self, inputs, hidden):
     # TODO ========================
-    return logits.view(self.seq_len, self.batch_size, self.vocab_size), hidden
+    logits = torch.zeros([self.seq_len, self.batch_size, self.vocab_size], device=hidden.device)
+    embedding_output = self.embedding_layer(inputs)
+
+    for i in range(self.seq_len):
+        x = self.embedding_dropout(embedding_output[i])
+        for j in range(self.num_layers):
+            hidden[j] = self.gru_layers[j](x, hidden[j].clone())
+            x = self.dropout_layers[j](hidden[j])
+
+        logits[i] = self.output_layer(x)
+
+    return logits, hidden
 
   def generate(self, input, hidden, generated_seq_len):
     # TODO ========================
-    return samples
+    return None
 
 
 # Problem 3
