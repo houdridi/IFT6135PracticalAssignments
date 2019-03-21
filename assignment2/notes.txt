@@ -1,2 +1,9 @@
 Assignment Github Repository:
 https://github.com/CW-Huang/IFT6135H19_assignment/tree/master/assignment2
+
+
+for each experiment: 1 plot train + valid ppl vs epochs, 1 plot train + valid ppl vs wall clock time	Include all architectures in one
+Make table of results
+
+for each optimizer: 1  valid ppl vs epochs, 1  valid ppl vs wall-clock all architectures
+for each architecture: 1  valid ppl vs epochs, 1  valid ppl vs wall-clock all architectures
