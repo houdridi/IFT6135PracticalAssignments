@@ -47,9 +47,9 @@ def clones(module, N):
 
 class RNNLayer(nn.Module):
 
-    def __init__(self, input_size, hidden_size):
+    def __init__(self, x_size, hidden_size):
         super(RNNLayer, self).__init__()
-        self.W = nn.Linear(input_size+hidden_size, hidden_size)
+        self.W = nn.Linear(x_size + hidden_size, hidden_size)
         self.tanh = nn.Tanh()
         self.hidden_size = hidden_size
 
@@ -173,17 +173,18 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
               if you are curious.
                     shape: (num_layers, batch_size, hidden_size)
     """
-    logits = torch.zeros([self.seq_len, self.batch_size, self.vocab_size], device=hidden.device)
+    logits = torch.zeros([self.seq_len, self.batch_size, self.vocab_size], device=inputs.device)
 
     embedding_output = self.embedding_layer(inputs)
 
-    for i in range(self.seq_len):
-        x = self.embedding_dropout(embedding_output[i])
-        for j in range(self.num_layers):
-            hidden[j] = self.rnn_layers[j](x, hidden[j])
-            x = self.dropout_layers[j](hidden[j])
+    for t in range(self.seq_len):
+        x = self.embedding_dropout(embedding_output[t])
+        for l in range(self.num_layers):
+            h_out = self.rnn_layers[l](x, hidden[l])
+            x = self.dropout_layers[l](h_out)
+            hidden[l] = h_out
 
-        logits[i] = self.output_layer(x)
+        logits[t] = self.output_layer(x)
 
     return logits, hidden
 
@@ -287,16 +288,20 @@ class GRU(nn.Module): # Implement a stacked GRU RNN
 
   def forward(self, inputs, hidden):
     # TODO ========================
-    logits = torch.zeros([self.seq_len, self.batch_size, self.vocab_size], device=hidden.device)
+    logits = torch.zeros([self.seq_len, self.batch_size, self.vocab_size], device=inputs.device)
+
     embedding_output = self.embedding_layer(inputs)
 
-    for i in range(self.seq_len):
-        x = self.embedding_dropout(embedding_output[i])
-        for j in range(self.num_layers):
-            hidden[j] = self.gru_layers[j](x, hidden[j].clone())
-            x = self.dropout_layers[j](hidden[j])
+    for t in range(self.seq_len):
+        x = self.embedding_dropout(embedding_output[t])
+        h_t = []
+        for l in range(self.num_layers):
+            h_out = self.gru_layers[l](x, hidden[l])
+            x = self.dropout_layers[l](h_out)
+            h_t.append(h_out)
 
-        logits[i] = self.output_layer(x)
+        hidden = torch.stack(h_t)
+        logits[t] = self.output_layer(x)
 
     return logits, hidden
 

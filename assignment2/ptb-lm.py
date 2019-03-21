@@ -433,6 +433,7 @@ val_ppls = []
 val_losses = []
 best_val_so_far = np.inf
 times = []
+best_vals = []
 
 # In debug mode, only run one epoch
 if args.debug:
@@ -475,6 +476,7 @@ for epoch in range(num_epochs):
     val_ppls.append(val_ppl)
     train_losses.extend(train_loss)
     val_losses.extend(val_loss)
+    best_vals.append(best_val_so_far)
     times.append(time.time() - t0)
     log_str = 'epoch: ' + str(epoch) + '\t' \
             + 'train ppl: ' + str(train_ppl) + '\t' \
@@ -491,7 +493,9 @@ print('\nDONE\n\nSaving learning curves to '+lc_path)
 np.save(lc_path, {'train_ppls':train_ppls, 
                   'val_ppls':val_ppls, 
                   'train_losses':train_losses,
-                  'val_losses':val_losses})
+                  'val_losses':val_losses,
+                  'best_vals':best_vals,
+                  'times': times})
 # NOTE ==============================================
 # To load these, run 
 # >>> x = np.load(lc_path)[()]
