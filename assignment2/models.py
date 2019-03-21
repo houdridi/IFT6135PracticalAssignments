@@ -62,12 +62,9 @@ class RNNLayer(nn.Module):
         torch.nn.init.uniform_(self.W.bias, -d, d)
 
 
+class RNNBase(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities.
 
-class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities.
-
-
-
-  def __init__(self, emb_size, hidden_size, seq_len, batch_size, vocab_size, num_layers, dp_keep_prob):
+  def __init__(self, layer_ctor, emb_size, hidden_size, seq_len, batch_size, vocab_size, num_layers, dp_keep_prob):
     """
     emb_size:     The number of units in the input embeddings
     hidden_size:  The number of hidden units per layer
@@ -79,7 +76,7 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
                   non-recurrent connections.
                   Do not apply dropout on recurrent connections.
     """
-    super(RNN, self).__init__()
+    super(RNNBase, self).__init__()
 
     # TODO ========================
     # Initialization of the parameters of the recurrent and fc layers.
@@ -106,7 +103,7 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
     self.rnn_layers = nn.ModuleList()
     self.dropout_layers = nn.ModuleList()
 
-    self.rnn_layers.extend([RNNLayer(emb_size if i == 0 else hidden_size, hidden_size) for i in range(num_layers)])
+    self.rnn_layers.extend([layer_ctor(emb_size if i == 0 else hidden_size, hidden_size) for i in range(num_layers)])
     self.dropout_layers.extend([nn.Dropout(1-dp_keep_prob) for i in range(num_layers)])
     self.output_layer = nn.Linear(hidden_size, vocab_size)
 
@@ -179,11 +176,13 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
 
     for t in range(self.seq_len):
         x = self.embedding_dropout(embedding_output[t])
+        h_t = []
         for l in range(self.num_layers):
             h_out = self.rnn_layers[l](x, hidden[l])
             x = self.dropout_layers[l](h_out)
-            hidden[l] = h_out
+            h_t.append(h_out)
 
+        hidden = torch.stack(h_t)
         logits[t] = self.output_layer(x)
 
     return logits, hidden
@@ -217,22 +216,41 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
     # return samples
 
 
+class RNN(RNNBase): # Implement a stacked vanilla RNN with Tanh nonlinearities.
+
+  def __init__(self, emb_size, hidden_size, seq_len, batch_size, vocab_size, num_layers, dp_keep_prob):
+    """
+    emb_size:     The number of units in the input embeddings
+    hidden_size:  The number of hidden units per layer
+    seq_len:      The length of the input sequences
+    vocab_size:   The number of tokens in the vocabulary (10,000 for Penn TreeBank)
+    num_layers:   The depth of the stack (i.e. the number of hidden layers at
+                  each time-step)
+    dp_keep_prob: The probability of *not* dropping out units in the
+                  non-recurrent connections.
+                  Do not apply dropout on recurrent connections.
+    """
+    super(RNN, self).__init__(RNNLayer, emb_size, hidden_size, seq_len, batch_size,
+                              vocab_size, num_layers, dp_keep_prob)
+
 
 # Problem 2
 class GRULayer(nn.Module):
-    def __init__(self, input_size, hidden_size):
+    def __init__(self, x_size, hidden_size):
         super(GRULayer, self).__init__()
-        self.r_linear = nn.Linear(input_size + hidden_size, hidden_size)
-        self.z_linear = nn.Linear(input_size + hidden_size, hidden_size)
-        self.W_h = nn.Linear(input_size, hidden_size)
-        self.U_h = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.r_linear = nn.Linear(x_size + hidden_size, hidden_size)
+        self.z_linear = nn.Linear(x_size + hidden_size, hidden_size)
+        self.h_linear = nn.Linear(x_size + hidden_size, hidden_size)
+        self.h_tanh = nn.Tanh()
+        self.r_sigmoid = nn.Sigmoid()
+        self.z_sigmoid = nn.Sigmoid()
         self.hidden_size = hidden_size
 
     def forward(self, x, h_prev):
         combined_input = torch.cat((x, h_prev), 1)
-        z = torch.sigmoid(self.z_linear(combined_input))
-        r = torch.sigmoid(self.r_linear(combined_input))
-        h_candidate = torch.tanh(self.W_h(x) + self.U_h(r * h_prev))
+        z = self.z_sigmoid(self.z_linear(combined_input))
+        r = self.r_sigmoid(self.r_linear(combined_input))
+        h_candidate = self.h_tanh(self.h_linear(torch.cat((x, r*h_prev), 1)))
         return (1-z)*h_prev + z*h_candidate
 
     def init_weights(self):
@@ -241,73 +259,19 @@ class GRULayer(nn.Module):
         torch.nn.init.uniform_(self.r_linear.bias, -d, d)
         torch.nn.init.uniform_(self.z_linear.weight, -d, d)
         torch.nn.init.uniform_(self.z_linear.bias, -d, d)
-        torch.nn.init.uniform_(self.W_h.weight, -d, d)
-        torch.nn.init.uniform_(self.W_h.bias, -d, d)
-        torch.nn.init.uniform_(self.U_h.weight, -d, d)
+        torch.nn.init.uniform_(self.h_linear.weight, -d, d)
+        torch.nn.init.uniform_(self.h_linear.bias, -d, d)
 
-class GRU(nn.Module): # Implement a stacked GRU RNN
+
+class GRU(RNNBase): # Implement a stacked GRU RNN
   """
   Follow the same instructions as for RNN (above), but use the equations for
   GRU, not Vanilla RNN.
   """
   def __init__(self, emb_size, hidden_size, seq_len, batch_size, vocab_size, num_layers, dp_keep_prob):
-    super(GRU, self).__init__()
+    super(GRU, self).__init__(GRULayer, emb_size, hidden_size, seq_len,
+                              batch_size, vocab_size, num_layers, dp_keep_prob)
 
-    # TODO ========================
-    self.emb_size = emb_size
-    self.hidden_size = hidden_size
-    self.seq_len = seq_len
-    self.batch_size = batch_size
-    self.vocab_size = vocab_size
-    self.num_layers = num_layers
-    self.dp_keep_prob = dp_keep_prob
-
-    self.gru_layers = nn.ModuleList()
-    self.dropout_layers = nn.ModuleList()
-
-    self.gru_layers.extend([GRULayer(emb_size if i == 0 else hidden_size, hidden_size) for i in range(num_layers)])
-    self.dropout_layers.extend([nn.Dropout(1-dp_keep_prob) for i in range(num_layers)])
-    self.output_layer = nn.Linear(hidden_size, vocab_size)
-
-    self.embedding_layer = nn.Embedding(vocab_size, emb_size)
-    self.embedding_dropout = nn.Dropout(1-dp_keep_prob)
-    self.init_weights()
-
-
-  def init_weights(self):
-    # TODO ========================
-    torch.nn.init.uniform_(self.embedding_layer.weight, -0.1, 0.1)
-    torch.nn.init.uniform_(self.output_layer.weight, -0.1, 0.1)
-    torch.nn.init.zeros_(self.output_layer.bias)
-    for gru_layer in self.gru_layers:
-        gru_layer.init_weights()
-
-  def init_hidden(self):
-    # TODO ========================
-    return torch.zeros([self.num_layers, self.batch_size, self.hidden_size])
-
-  def forward(self, inputs, hidden):
-    # TODO ========================
-    logits = torch.zeros([self.seq_len, self.batch_size, self.vocab_size], device=inputs.device)
-
-    embedding_output = self.embedding_layer(inputs)
-
-    for t in range(self.seq_len):
-        x = self.embedding_dropout(embedding_output[t])
-        h_t = []
-        for l in range(self.num_layers):
-            h_out = self.gru_layers[l](x, hidden[l])
-            x = self.dropout_layers[l](h_out)
-            h_t.append(h_out)
-
-        hidden = torch.stack(h_t)
-        logits[t] = self.output_layer(x)
-
-    return logits, hidden
-
-  def generate(self, input, hidden, generated_seq_len):
-    # TODO ========================
-    return None
 
 
 # Problem 3
