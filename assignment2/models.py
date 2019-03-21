@@ -73,26 +73,26 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
     hidden_size:  The number of hidden units per layer
     seq_len:      The length of the input sequences
     vocab_size:   The number of tokens in the vocabulary (10,000 for Penn TreeBank)
-    num_layers:   The depth of the stack (i.e. the number of hidden layers at 
+    num_layers:   The depth of the stack (i.e. the number of hidden layers at
                   each time-step)
-    dp_keep_prob: The probability of *not* dropping out units in the 
+    dp_keep_prob: The probability of *not* dropping out units in the
                   non-recurrent connections.
                   Do not apply dropout on recurrent connections.
     """
     super(RNN, self).__init__()
 
     # TODO ========================
-    # Initialization of the parameters of the recurrent and fc layers. 
-    # Your implementation should support any number of stacked hidden layers 
+    # Initialization of the parameters of the recurrent and fc layers.
+    # Your implementation should support any number of stacked hidden layers
     # (specified by num_layers), use an input embedding layer, and include fully
     # connected layers with dropout after each recurrent layer.
-    # Note: you may use pytorch's nn.Linear, nn.Dropout, and nn.Embedding 
+    # Note: you may use pytorch's nn.Linear, nn.Dropout, and nn.Embedding
     # modules, but not recurrent modules.
     #
-    # To create a variable number of parameter tensors and/or nn.Modules 
-    # (for the stacked hidden layer), you may need to use nn.ModuleList or the 
-    # provided clones function (as opposed to a regular python list), in order 
-    # for Pytorch to recognize these parameters as belonging to this nn.Module 
+    # To create a variable number of parameter tensors and/or nn.Modules
+    # (for the stacked hidden layer), you may need to use nn.ModuleList or the
+    # provided clones function (as opposed to a regular python list), in order
+    # for Pytorch to recognize these parameters as belonging to this nn.Module
     # and compute their gradients automatically. You're not obligated to use the
     # provided clones function.
     self.emb_size = emb_size
@@ -119,7 +119,7 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
     # TODO ========================
     # Initialize the embedding and output weights uniformly in the range [-0.1, 0.1]
     # and output biases to 0 (in place). The embeddings should not use a bias vector.
-    # Initialize all other (i.e. recurrent and linear) weights AND biases uniformly 
+    # Initialize all other (i.e. recurrent and linear) weights AND biases uniformly
     # in the range [-k, k] where k is the square root of 1/hidden_size
     torch.nn.init.uniform_(self.embedding_layer.weight, -0.1, 0.1)
     torch.nn.init.uniform_(self.output_layer.weight, -0.1, 0.1)
@@ -140,36 +140,36 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
   def forward(self, inputs, hidden):
     # TODO ========================
     # Compute the forward pass, using nested python for loops.
-    # The outer for loop should iterate over timesteps, and the 
-    # inner for loop should iterate over hidden layers of the stack. 
-    # 
-    # Within these for loops, use the parameter tensors and/or nn.modules you 
-    # created in __init__ to compute the recurrent updates according to the 
+    # The outer for loop should iterate over timesteps, and the
+    # inner for loop should iterate over hidden layers of the stack.
+    #
+    # Within these for loops, use the parameter tensors and/or nn.modules you
+    # created in __init__ to compute the recurrent updates according to the
     # equations provided in the .tex of the assignment.
     #
     # Note that those equations are for a single hidden-layer RNN, not a stacked
-    # RNN. For a stacked RNN, the hidden states of the l-th layer are used as 
+    # RNN. For a stacked RNN, the hidden states of the l-th layer are used as
     # inputs to to the {l+1}-st layer (taking the place of the input sequence).
 
     """
     Arguments:
-        - inputs: A mini-batch of input sequences, composed of integers that 
+        - inputs: A mini-batch of input sequences, composed of integers that
                     represent the index of the current token(s) in the vocabulary.
                         shape: (seq_len, batch_size)
         - hidden: The initial hidden states for every layer of the stacked RNN.
                         shape: (num_layers, batch_size, hidden_size)
-    
+
     Returns:
         - Logits for the softmax over output tokens at every time-step.
               **Do NOT apply softmax to the outputs!**
-              Pytorch's CrossEntropyLoss function (applied in ptb-lm.py) does 
+              Pytorch's CrossEntropyLoss function (applied in ptb-lm.py) does
               this computation implicitly.
                     shape: (seq_len, batch_size, vocab_size)
         - The final hidden states for every layer of the stacked RNN.
-              These will be used as the initial hidden states for all the 
-              mini-batches in an epoch, except for the first, where the return 
+              These will be used as the initial hidden states for all the
+              mini-batches in an epoch, except for the first, where the return
               value of self.init_hidden will be used.
-              See the repackage_hiddens function in ptb-lm.py for more details, 
+              See the repackage_hiddens function in ptb-lm.py for more details,
               if you are curious.
                     shape: (num_layers, batch_size, hidden_size)
     """
@@ -191,12 +191,12 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
     # TODO ========================
     # Compute the forward pass, as in the self.forward method (above).
     # You'll probably want to copy substantial portions of that code here.
-    # 
+    #
     # We "seed" the generation by providing the first inputs.
-    # Subsequent inputs are generated by sampling from the output distribution, 
+    # Subsequent inputs are generated by sampling from the output distribution,
     # as described in the tex (Problem 5.3)
-    # Unlike for self.forward, you WILL need to apply the softmax activation 
-    # function here in order to compute the parameters of the categorical 
+    # Unlike for self.forward, you WILL need to apply the softmax activation
+    # function here in order to compute the parameters of the categorical
     # distributions to be sampled from at each time-step.
 
     """
@@ -206,7 +206,7 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
         - hidden: The initial hidden states for every layer of the stacked RNN.
                         shape: (num_layers, batch_size, hidden_size)
         - generated_seq_len: The length of the sequence to generate.
-                       Note that this can be different than the length used 
+                       Note that this can be different than the length used
                        for training (self.seq_len)
     Returns:
         - Sampled sequences of tokens
@@ -216,8 +216,8 @@ class RNN(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities
     # return samples
 
 
-# Problem 2
 
+# Problem 2
 class GRULayer(nn.Module):
     def __init__(self, input_size, hidden_size):
         super(GRULayer, self).__init__()
@@ -246,7 +246,7 @@ class GRULayer(nn.Module):
 
 class GRU(nn.Module): # Implement a stacked GRU RNN
   """
-  Follow the same instructions as for RNN (above), but use the equations for 
+  Follow the same instructions as for RNN (above), but use the equations for
   GRU, not Vanilla RNN.
   """
   def __init__(self, emb_size, hidden_size, seq_len, batch_size, vocab_size, num_layers, dp_keep_prob):
@@ -375,7 +375,7 @@ class MultiHeadedAttention(nn.Module):
         dropout: probability of DROPPING units
         """
         super(MultiHeadedAttention, self).__init__()
-        # This sets the size of the keys, values, and queries (self.d_k) to all 
+        # This sets the size of the keys, values, and queries (self.d_k) to all
         # be equal to the number of output units divided by the number of heads.
         self.d_k = n_units // n_heads
         # This requires the number of n_heads to evenly divide n_units.
@@ -386,39 +386,43 @@ class MultiHeadedAttention(nn.Module):
         # TODO: create/initialize any necessary parameters or layers
         # Initialize all weights and biases uniformly in the range [-k, k],
         # where k is the square root of 1/n_units.
-        # Note: the only Pytorch modules you are allowed to use are nn.Linear 
+        # Note: the only Pytorch modules you are allowed to use are nn.Linear
         # and nn.Dropout
+        # ETA: you can also use softmax
+        # ETA: you can use the "clones" function we provide.
+        # ETA: you can use masked_fill
 
         self.lin_query = nn.Linear(n_units,n_units)
         self.lin_key = nn.Linear(n_units,n_units)
         self.lin_value = nn.Linear(n_units,n_units)
         self.lin_out = nn.Linear(n_units,n_units)
-        
+
         self.dropout = nn.Dropout(dropout)
-        
+
         # VERIFY IF FUNCTION IS ALLOWED
         self.lin_query.weight.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
-        self.lin_query.bias.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))        
+        self.lin_query.bias.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
         self.lin_key.weight.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
-        self.lin_key.bias.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))       
+        self.lin_key.bias.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
         self.lin_value.weight.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
-        self.lin_value.bias.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units)) 
+        self.lin_value.bias.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
         self.lin_out.weight.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
         self.lin_out.bias.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
-        
+
     def forward(self, query, key, value, mask=None):
         # TODO: implement the masked multi-head attention.
-        # query, key, and value all have size: (batch_size, seq_len, self.n_units)
+        # query, key, and value correspond to Q, K, and V in the latex, and
+        # they all have size: (batch_size, seq_len, self.n_units)
         # mask has size: (batch_size, seq_len, seq_len)
-        # As described in the .tex, apply input masking to the softmax 
+        # As described in the .tex, apply input masking to the softmax
         # generating the "attention values" (i.e. A_i in the .tex)
         # Also apply dropout to the attention values.
 
-        
+
         # [batch, seq_len, units]
         # Keep batch size
         nb_batch = query.size(0)
-        
+
         # Compute linear system for query, key and value
         Qo = self.lin_query(query).view(nb_batch, -1, self.n_heads, self.d_k)
         Ko = self.lin_key(key).view(nb_batch, -1, self.n_heads, self.d_k)
@@ -429,7 +433,7 @@ class MultiHeadedAttention(nn.Module):
         # print(Qo.size())
         # print(Vo.size())
         # [batch, seq_len, nb_h, q_size)
-                
+
         # Scaled dot-product attention
         Ko = torch.transpose(Ko,1,2)
         Qo = torch.transpose(Qo,1,2)
@@ -440,27 +444,27 @@ class MultiHeadedAttention(nn.Module):
         A = A/math.sqrt(self.d_k)
         A = A.masked_fill(mask.unsqueeze(1) == 0, -1e9)
         A = nn.functional.softmax(A, dim=-1)
-        
+
         # Dropout attention values
         A = self.dropout(A)
-        
+
         # print(A.size())
         # print(Vo.size())
-        
+
         H = torch.matmul(A, Vo)
-        
+
         # print(H.size())
-        
+
         # Concatenate
         # print(H.size()) #[batch, nb_h, seq_len, q_size]
         H = H.transpose(1, 2).contiguous() \
              .view(nb_batch, -1, self.n_units)
         # print(H.size())
-        
+
         # Linear layer
         Ao = self.lin_out(H)
         # print(Ao.size())
-        
+
         return Ao # size: (batch_size, seq_len, self.n_units)
 
 
