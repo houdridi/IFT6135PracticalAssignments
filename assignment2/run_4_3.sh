@@ -42,3 +42,21 @@ python ptb-lm.py --model=GRU --optimizer=SGD_LR_SCHEDULE --initial_lr=10 --batch
 
 ## TRANSFORMER
 ############################################################################
+
+# num layers
+python ptb-lm.py --model=TRANSFORMER --optimizer=SGD_LR_SCHEDULE --initial_lr=20 --batch_size=128 --seq_len=35 --hidden_size=512 --num_layers=8 --dp_keep_prob=0.9 --save_best --save_dir=4_3_
+python ptb-lm.py --model=TRANSFORMER --optimizer=SGD_LR_SCHEDULE --initial_lr=20 --batch_size=128 --seq_len=35 --hidden_size=512 --num_layers=4 --dp_keep_prob=0.9 --save_best --save_dir=4_3_
+
+# keep prob
+python ptb-lm.py --model=TRANSFORMER --optimizer=SGD_LR_SCHEDULE --initial_lr=20 --batch_size=128 --seq_len=50 --hidden_size=512 --num_layers=6 --dp_keep_prob=0.7 --save_best --save_dir=4_3_
+
+# sequence length
+python ptb-lm.py --model=TRANSFORMER --optimizer=SGD_LR_SCHEDULE --initial_lr=20 --batch_size=128 --seq_len=50 --hidden_size=512 --num_layers=6 --dp_keep_prob=0.9 --save_best --save_dir=4_3_
+python ptb-lm.py --model=TRANSFORMER --optimizer=SGD_LR_SCHEDULE --initial_lr=20 --batch_size=128 --seq_len=20 --hidden_size=512 --num_layers=6 --dp_keep_prob=0.9 --save_best --save_dir=4_3_
+
+# batch size
+python ptb-lm.py --model=TRANSFORMER --optimizer=SGD_LR_SCHEDULE --initial_lr=20 --batch_size=64 --seq_len=35 --hidden_size=512 --num_layers=6 --dp_keep_prob=0.9 --save_best --save_dir=4_3_
+
+# hidden size
+python ptb-lm.py --model=TRANSFORMER --optimizer=SGD_LR_SCHEDULE --initial_lr=20 --batch_size=128 --seq_len=35 --hidden_size=1028 --num_layers=6 --dp_keep_prob=0.9 --save_best --save_dir=4_3_
+python ptb-lm.py --model=TRANSFORMER --optimizer=SGD_LR_SCHEDULE --initial_lr=20 --batch_size=128 --seq_len=35 --hidden_size=256 --num_layers=6 --dp_keep_prob=0.9 --save_best --save_dir=4_3_

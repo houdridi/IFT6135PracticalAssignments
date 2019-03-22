@@ -212,8 +212,20 @@ class RNNBase(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlineari
         - Sampled sequences of tokens
                     shape: (generated_seq_len, batch_size)
     """
-    pass
-    # return samples
+
+    hidden_states = hidden.clone()
+    current_word = input
+    samples = torch.zeros((generated_seq_len, input.shape[0]), device=input.device)
+
+    for t in range(generated_seq_len):
+        x = self.embedding_dropout(self.embedding_layer(current_word))
+        for l in range(self.num_layers):
+            hidden_states[l] = self.rnn_layers[l](x, hidden_states[l])  # Forward pass
+            x = self.dropout_layers[l](hidden_states[l])
+        current_word = torch.distributions.Categorical(logits=self.output_layer(x)).sample()
+        samples[t] = current_word
+
+    return samples
 
 
 class RNN(RNNBase): # Implement a stacked vanilla RNN with Tanh nonlinearities.
