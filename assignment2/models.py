@@ -64,7 +64,8 @@ class RNNLayer(nn.Module):
 
 class RNNBase(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities.
 
-  def __init__(self, layer_ctor, emb_size, hidden_size, seq_len, batch_size, vocab_size, num_layers, dp_keep_prob):
+  def __init__(self, layer_ctor, emb_size, hidden_size, seq_len, batch_size,
+               vocab_size, num_layers, dp_keep_prob, track_state_history=False):
     """
     emb_size:     The number of units in the input embeddings
     hidden_size:  The number of hidden units per layer
@@ -109,7 +110,8 @@ class RNNBase(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlineari
 
     self.embedding_layer = nn.Embedding(vocab_size, emb_size)
     self.embedding_dropout = nn.Dropout(1-dp_keep_prob)
-
+    self.track_state_history = track_state_history
+    self.state_history = None
     self.init_weights()
 
   def init_weights(self):
@@ -172,6 +174,10 @@ class RNNBase(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlineari
     """
     logits = torch.zeros([self.seq_len, self.batch_size, self.vocab_size], device=inputs.device)
 
+    # Used for 5.2 to keep track of all hidden states for gradient calculations
+    if self.track_state_history:
+        self.state_history = [[] for _ in range(self.num_layers)]
+
     embedding_output = self.embedding_layer(inputs)
 
     for t in range(self.seq_len):
@@ -181,6 +187,10 @@ class RNNBase(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlineari
             h_out = self.rnn_layers[l](x, hidden[l])
             x = self.dropout_layers[l](h_out)
             h_t.append(h_out)
+
+            # Used for 5.2 to keep track of all hidden states for gradient calculations
+            if self.track_state_history:
+                self.state_history[l].append(h_out)
 
         hidden = torch.stack(h_t)
         logits[t] = self.output_layer(x)

@@ -136,6 +136,24 @@ def load_model(model_info, device, vocab_size, emb_size=200, load_on_device=True
     return model
 
 
+def repackage_hidden(h):
+    """
+    Wraps hidden states in new Tensors, to detach them from their history.
+
+    This prevents Pytorch from trying to backpropagate into previous input
+    sequences when we use the final hidden states from one mini-batch as the
+    initial hidden states for the next mini-batch.
+
+    Using the final hidden states in this way makes sense when the elements of
+    the mini-batches are actually successive subsequences in a set of longer sequences.
+    This is the case with the way we've processed the Penn Treebank dataset.
+    """
+    if isinstance(h, Variable):
+        return h.detach_()
+    else:
+        return tuple(repackage_hidden(v) for v in h)
+
+
 class Batch:
     """Data processing for the transformer. This class adds a mask to the data."""
 
