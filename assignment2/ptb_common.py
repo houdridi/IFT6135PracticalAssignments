@@ -19,10 +19,34 @@ from models import make_model as TRANSFORMER
 #
 ###############################################################################
 
+
+class ModelInfo:
+    def __init__(self, model, optimizer, initial_lr, batch_size, seq_len, hidden_size, num_layers, dp_keep_prob, section='4_1'):
+        self.model = model
+        self.optimizer = optimizer
+        self.initial_lr = initial_lr
+        self.batch_size = batch_size
+        self.seq_len = seq_len
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.dp_keep_prob = dp_keep_prob
+        self.section = section
+
+    def get_params_path(self, folder_prefix='_save_best_0'):
+        params_file = 'best_params.pt'
+        folder_path = '%s_%s_model=%s_optimizer=%s_initial_lr=%s_batch_size=%s_' \
+                      'seq_len=%s_hidden_size=%s_num_layers=%s_dp_keep_prob=%s%s' \
+                      % (self.model, self.optimizer, self.model, self.optimizer, self.initial_lr,
+                         self.batch_size, self.seq_len, self.hidden_size,
+                         self.num_layers, self.dp_keep_prob, folder_prefix)
+        return os.path.join(self.section, folder_path, params_file)
+
+
 # HELPER FUNCTIONS
 def _read_words(filename):
     with open(filename, "r") as f:
       return f.read().replace("\n", "<eos>").split()
+
 
 def _build_vocab(filename):
     data = _read_words(filename)
@@ -35,6 +59,7 @@ def _build_vocab(filename):
     id_to_word = dict((v, k) for k, v in word_to_id.items())
 
     return word_to_id, id_to_word
+
 
 def _file_to_word_ids(filename, word_to_id):
     data = _read_words(filename)
@@ -51,6 +76,7 @@ def ptb_raw_data(data_path=None, prefix="ptb"):
     valid_data = _file_to_word_ids(valid_path, word_to_id)
     test_data = _file_to_word_ids(test_path, word_to_id)
     return train_data, valid_data, test_data, word_to_id, id_2_word
+
 
 # Yields minibatches of data
 def ptb_iterator(raw_data, batch_size, num_steps):
@@ -73,16 +99,19 @@ def ptb_iterator(raw_data, batch_size, num_steps):
         yield (x, y)
 
 
-def load_model(model_info, vocab_size, emb_size=200):
-    path = model_info.get_params_path()
-
+def init_device():
     if torch.cuda.is_available():
-        print("Loading %s with GPU" % path)
+        print("Using the GPU")
         device = torch.device("cuda")
     else:
         print("WARNING: You are about to run on cpu, and this will likely run out \
           of memory. \n You can try setting batch_size=1 to reduce memory usage")
         device = torch.device("cpu")
+    return device
+
+
+def load_model(model_info, device, vocab_size, emb_size=200, load_on_device=True):
+    params_path = model_info.get_params_path()
 
     if model_info.model == 'RNN':
         model = RNN(emb_size=emb_size, hidden_size=model_info.hidden_size,
@@ -101,5 +130,31 @@ def load_model(model_info, vocab_size, emb_size=200):
         model.seq_len = model_info.seq_len
         model.vocab_size = vocab_size
 
-    model.load_state_dict(torch.load(path, map_location=device))
+    if load_on_device:
+        model = model.to(device)
+    model.load_state_dict(torch.load(params_path, map_location=device))
     return model
+
+
+class Batch:
+    """Data processing for the transformer. This class adds a mask to the data."""
+
+    def __init__(self, x, pad=-1):
+        self.data = x
+        self.mask = self.make_mask(self.data, pad)
+
+    @staticmethod
+    def make_mask(data, pad):
+        """Create a mask to hide future words."""
+
+        def subsequent_mask(size):
+            """ helper function for creating the masks. """
+            attn_shape = (1, size, size)
+            subsequent_mask = np.triu(np.ones(attn_shape), k=1).astype('uint8')
+            return torch.from_numpy(subsequent_mask) == 0
+
+        mask = (data != pad).unsqueeze(-2)
+        mask = mask & Variable(
+            subsequent_mask(data.size(-1)).type_as(mask.data))
+        return mask
+
