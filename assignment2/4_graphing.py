@@ -50,7 +50,7 @@ class ExperimentInfo:
 
 def get_experiments(section):
     return [ExperimentInfo(section, result_folder) for result_folder in os.listdir(section)
-            if result_folder != 'additional_experiments']
+            if result_folder != 'extra']
 
 
 def plot_experiment_performance(experiment: ExperimentInfo):
@@ -64,7 +64,7 @@ def plot_experiment_performance(experiment: ExperimentInfo):
     plt.ylabel("PPL")
     plt.xlabel("Epochs")
     plt.savefig(os.path.join(experiment.result_folder, 'ppl_vs_epochs.png'), bbox_inches='tight', pad_inches=0.2)
-    plt.savefig(os.path.join(RESULTS_FOLDER, 'individual_experiments', '%s_ppl_vs_epochs.png' % experiment.full_name),
+    plt.savefig(os.path.join(RESULTS_FOLDER, 'experiments', '%s_ppl_vs_epochs.png' % experiment.full_name),
                 bbox_inches='tight', pad_inches=0.2)
     plt.clf()
     plt.close()
@@ -78,7 +78,7 @@ def plot_experiment_performance(experiment: ExperimentInfo):
     plt.ylabel("PPL")
     plt.xlabel("Wall-Clock Time")
     plt.savefig(os.path.join(experiment.result_folder, 'ppl_vs_wct.png'), bbox_inches='tight', pad_inches=0.2)
-    plt.savefig(os.path.join(RESULTS_FOLDER, 'individual_experiments', '%s_ppl_vs_wct.png' % experiment.full_name),
+    plt.savefig(os.path.join(RESULTS_FOLDER, 'experiments', '%s_ppl_vs_wct.png' % experiment.full_name),
                 bbox_inches='tight', pad_inches=0.2)
     plt.clf()
     plt.close()
