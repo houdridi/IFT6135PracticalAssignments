@@ -20,28 +20,6 @@ from models import make_model as TRANSFORMER
 ###############################################################################
 
 
-class ModelInfo:
-    def __init__(self, model, optimizer, initial_lr, batch_size, seq_len, hidden_size, num_layers, dp_keep_prob, section='4_1'):
-        self.model = model
-        self.optimizer = optimizer
-        self.initial_lr = initial_lr
-        self.batch_size = batch_size
-        self.seq_len = seq_len
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.dp_keep_prob = dp_keep_prob
-        self.section = section
-
-    def get_params_path(self, folder_prefix='_save_best_0'):
-        params_file = 'best_params.pt'
-        folder_path = '%s_%s_model=%s_optimizer=%s_initial_lr=%s_batch_size=%s_' \
-                      'seq_len=%s_hidden_size=%s_num_layers=%s_dp_keep_prob=%s%s' \
-                      % (self.model, self.optimizer, self.model, self.optimizer, self.initial_lr,
-                         self.batch_size, self.seq_len, self.hidden_size,
-                         self.num_layers, self.dp_keep_prob, folder_prefix)
-        return os.path.join(self.section, folder_path, params_file)
-
-
 # HELPER FUNCTIONS
 def _read_words(filename):
     with open(filename, "r") as f:
@@ -177,16 +155,56 @@ class Batch:
         return mask
 
 
-def normalize_times(results_dir, scale):
-    learning_curves = np.load(os.path.join(results_dir, 'learning_curves.npy'))[()]
-    learning_curves['times'] = [t*2 for t in learning_curves['times']]
+class ModelInfo:
+    def __init__(self, model, optimizer, initial_lr, batch_size, seq_len, hidden_size, num_layers, dp_keep_prob, section='4_1'):
+        self.model = model
+        self.optimizer = optimizer
+        self.initial_lr = initial_lr
+        self.batch_size = batch_size
+        self.seq_len = seq_len
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.dp_keep_prob = dp_keep_prob
+        self.section = section
 
-    for epoch in range(40):
-        log_str = 'epoch: ' + str(epoch) + '\t' \
-                + 'train ppl: ' + str(learning_curves['train_ppls'][epoch]) + '\t' \
-                + 'val ppl: ' + str(learning_curves['val_ppls'][epoch])  + '\t' \
-                + 'best val: ' + str(learning_curves['best_vals'][epoch]) + '\t' \
-                + 'time (s) spent in epoch: ' + str(learning_curves['times'][epoch])
-    print(log_str)
-    with open (os.path.join(results_dir, 'log.txt'), 'a') as f_:
-        f_.write(log_str+ '\n')
+    def get_folder_path(self, folder_prefix='_save_best_0'):
+        results_folder = '%s_%s_model=%s_optimizer=%s_initial_lr=%s_batch_size=%s_' \
+                      'seq_len=%s_hidden_size=%s_num_layers=%s_dp_keep_prob=%s%s' \
+                      % (self.model, self.optimizer, self.model, self.optimizer, self.initial_lr,
+                         self.batch_size, self.seq_len, self.hidden_size,
+                         self.num_layers, self.dp_keep_prob, folder_prefix)
+        return os.path.join(self.section, results_folder)
+
+    def get_params_path(self, folder_prefix='_save_best_0'):
+        params_file = 'best_params.pt'
+        return os.path.join(self.get_folder_path(folder_prefix), params_file)
+
+
+def normalize_times(model_info: ModelInfo, scale):
+    results_path = model_info.get_folder_path()
+    learning_curves_raw = np.load(os.path.join(results_path, 'learning_curves.npy'))
+    learning_curves = learning_curves_raw[()]
+    learning_curves['times'] = [t*scale for t in learning_curves['times']]
+
+    with open(os.path.join(results_path, 'log.txt'), 'w') as f_:
+        for epoch in range(40):
+            log_str = 'epoch: ' + str(epoch) + '\t' \
+                    + 'train ppl: ' + str(learning_curves['train_ppls'][epoch]) + '\t' \
+                    + 'val ppl: ' + str(learning_curves['val_ppls'][epoch])  + '\t' \
+                    + 'best val: ' + str(learning_curves['best_vals'][epoch]) + '\t' \
+                    + 'time (s) spent in epoch: ' + str(learning_curves['times'][epoch])
+            f_.write(log_str+ '\n')
+    np.save(os.path.join(results_path, 'learning_curves.npy'), learning_curves_raw)
+
+
+# normalize_times(ModelInfo(
+#     model='RNN',
+#     optimizer='ADAM',
+#     initial_lr=0.0001,
+#     batch_size=20,
+#     seq_len=35,
+#     hidden_size=1500,
+#     num_layers=2,
+#     dp_keep_prob=0.35
+# ), scale=1)
+
