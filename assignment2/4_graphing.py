@@ -140,7 +140,7 @@ def plot_valid_perf_by_optimizer(all_experiments: [ExperimentInfo], legend_size=
         opt_experiments = [e for e in all_experiments if e.optimizer == optimizer]
 
         opt_experiments.sort(key=lambda x: x.model)
-        y_lim = 3000 if optimizer == 'SGD' else 1000
+        y_lim = 3000 if optimizer == 'SGD' else (800 if optimizer == 'ADAM' else 1000)
 
         if not opt_experiments:
             continue
@@ -253,7 +253,7 @@ def graph_all_results():
 
     # 3) Plot section results
     print("Graphing results per section")
-    for section in sections:
+    for section in sections[:-1]:
         section_experiments = [e for e in experiments if e.section == section]
         plot_section_results(section, section_experiments, y_lim=3000 if section == '4_2' else 1000)
 
