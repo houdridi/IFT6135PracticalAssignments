@@ -17,3 +17,12 @@ __Implemented in Python 3__
 - Question 1: Multilayer Perceptron from scratch for MNIST dataset 
 - Question 2: CNN for MNIST dataset
 - Question 3: Dogs vs Cats Inclass Kaggle challenge for image classification
+
+## Assignment 2: Recurrent Neural Networks, Optimization, and Attention
+__Implemented in Python 3__
+- Question 1: RNN Implementation
+- Question 2: GRU Implementation
+- Question 3: Transformer Implementation
+- Question 4: Training Language Models
+- Question 5: Detailed Evaluation of Trained Models
+
