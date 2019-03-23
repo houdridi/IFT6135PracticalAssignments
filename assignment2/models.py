@@ -57,9 +57,9 @@ class RNNLayer(nn.Module):
         return self.tanh(self.W(torch.cat((x, h), 1)))
 
     def init_weights(self):
-        d = 1. / math.sqrt(self.hidden_size)
-        torch.nn.init.uniform_(self.W.weight, -d, d)
-        torch.nn.init.uniform_(self.W.bias, -d, d)
+        k = 1. / math.sqrt(self.hidden_size)
+        torch.nn.init.uniform_(self.W.weight, -k, k)
+        torch.nn.init.uniform_(self.W.bias, -k, k)
 
 
 class RNNBase(nn.Module): # Implement a stacked vanilla RNN with Tanh nonlinearities.
@@ -276,13 +276,13 @@ class GRULayer(nn.Module):
         return (1-z)*h_prev + z*h_candidate
 
     def init_weights(self):
-        d = 1. / math.sqrt(self.hidden_size)
-        torch.nn.init.uniform_(self.r_linear.weight, -d, d)
-        torch.nn.init.uniform_(self.r_linear.bias, -d, d)
-        torch.nn.init.uniform_(self.z_linear.weight, -d, d)
-        torch.nn.init.uniform_(self.z_linear.bias, -d, d)
-        torch.nn.init.uniform_(self.h_linear.weight, -d, d)
-        torch.nn.init.uniform_(self.h_linear.bias, -d, d)
+        k = 1. / math.sqrt(self.hidden_size)
+        torch.nn.init.uniform_(self.r_linear.weight, -k, k)
+        torch.nn.init.uniform_(self.r_linear.bias, -k, k)
+        torch.nn.init.uniform_(self.z_linear.weight, -k, k)
+        torch.nn.init.uniform_(self.z_linear.bias, -k, k)
+        torch.nn.init.uniform_(self.h_linear.weight, -k, k)
+        torch.nn.init.uniform_(self.h_linear.bias, -k, k)
 
 
 class GRU(RNNBase): # Implement a stacked GRU RNN
@@ -354,11 +354,99 @@ and a linear layer followed by a softmax.
 #SOFTWARE.
 
 
-
 #----------------------------------------------------------------------------------
 
 # TODO: implement this class
+class SingleHeadAttention(nn.Module):
+
+    EPSILON = 1e9
+
+    def __init__(self, n_units, d_k, dropout_rate):
+        super(SingleHeadAttention, self).__init__()
+        self.n_units = n_units
+        self.d_k = d_k
+        self.q_linear = nn.Linear(self.n_units, self.d_k)
+        self.k_linear = nn.Linear(self.n_units, self.d_k)
+        self.v_linear = nn.Linear(self.n_units, self.d_k)
+        self.dropout = nn.Dropout(dropout_rate)
+
+    def init_weights(self):
+        k = 1. / math.sqrt(self.n_units)
+        nn.init.uniform_(self.q_linear.weight, -k, k)
+        nn.init.uniform_(self.q_linear.bias, -k, k)
+        nn.init.uniform_(self.k_linear.weight, -k, k)
+        nn.init.uniform_(self.k_linear.bias, -k, k)
+        nn.init.uniform_(self.v_linear.weight, -k, k)
+        nn.init.uniform_(self.v_linear.bias, -k, k)
+
+    def forward(self, query, key, value, mask=None):
+        q_out = self.q_linear(query)
+        k_out = self.k_linear(key)
+        v_out = self.v_linear(value)
+        x = torch.matmul(q_out, k_out.transpose(1, 2))
+        x = torch.div(x, math.sqrt(self.d_k))
+
+        if mask is not None:
+            x = x * mask - SingleHeadAttention.EPSILON * (1 - mask)
+
+        a = F.softmax(x, dim=-1)
+        a = self.dropout(a)
+        return torch.matmul(a, v_out)
+
+
 class MultiHeadedAttention(nn.Module):
+    def __init__(self, n_heads, n_units, dropout=0.1):
+        """
+        n_heads: the number of attention heads
+        n_units: the number of output units
+        dropout: probability of DROPPING units
+        """
+        super(MultiHeadedAttention, self).__init__()
+        # This sets the size of the keys, values, and queries (self.d_k) to all
+        # be equal to the number of output units divided by the number of heads.
+        self.d_k = n_units // n_heads
+        # This requires the number of n_heads to evenly divide n_units.
+        assert n_units % n_heads == 0
+        self.n_heads = n_heads
+        self.n_units = n_units
+
+        # TODO: create/initialize any necessary parameters or layers
+        # Initialize all weights and biases uniformly in the range [-k, k],
+        # where k is the square root of 1/n_units.
+        # Note: the only Pytorch modules you are allowed to use are nn.Linear
+        # and nn.Dropout
+        # ETA: you can also use softmax
+        # ETA: you can use the "clones" function we provide.
+        # ETA: you can use masked_fill
+
+        self.out_linear = nn.Linear(n_units, n_units)
+        self.attention_heads = clones(SingleHeadAttention(n_units, self.d_k, dropout), n_heads)
+        self.init_weights()
+
+    def init_weights(self):
+        k = 1. / math.sqrt(self.n_units)
+        nn.init.uniform_(self.out_linear.weight, -k, k)
+        nn.init.uniform_(self.out_linear.bias, -k, k)
+        for attention_head in self.attention_heads:
+            attention_head.init_weights()
+
+    def forward(self, query, key, value, mask=None):
+        # TODO: implement the masked multi-head attention.
+        # query, key, and value correspond to Q, K, and V in the latex, and
+        # they all have size: (batch_size, seq_len, self.n_units)
+        # mask has size: (batch_size, seq_len, seq_len)
+        # As described in the .tex, apply input masking to the softmax
+        # generating the "attention values" (i.e. A_i in the .tex)
+        # Also apply dropout to the attention values.
+
+        if mask is not None:
+            mask = mask.float()
+
+        h_out = torch.cat([atn(query, key, value, mask) for atn in self.attention_heads], dim=-1)
+        return self.out_linear(h_out)
+
+
+class MultiHeadedAttentionAlternative(nn.Module):
     def __init__(self, n_heads, n_units, dropout=0.1):
         """
         n_heads: the number of attention heads

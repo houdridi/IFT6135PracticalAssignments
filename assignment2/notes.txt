@@ -10,3 +10,5 @@ for each architecture: 1  valid ppl vs epochs, 1  valid ppl vs wall-clock all ar
 
 https://ift6135forum.slack.com/archives/CGF0C0C4U/p1552755205437700
 https://ift6135forum.slack.com/archives/CGF0C0C4U/p1553062984647500?thread_ts=1552612648.370400&cid=CGF0C0C4U
+
+just to clarify, you should have ~6 curves on each plot for 4.4 and 4.5 (3 plots for each question)
