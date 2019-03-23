@@ -1,3 +1,0 @@
-model,optimizer,initial_lr,batch_size,seq_len,hidden_size,num_layers,dp_keep_prob,avg_wct,train_val,val_ppl
-GRU,SGD_LR_SCHEDULE,10,20,35,1500,2,0.35,148.09,535.4061110555734,314.07004588466395
-RNN,ADAM,0.0001,20,35,1500,2,0.35,84.58,660.9900684975511,402.8576710067265

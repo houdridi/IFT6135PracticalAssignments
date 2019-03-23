@@ -1,1 +1,0 @@
-model,optimizer,initial_lr,batch_size,seq_len,hidden_size,num_layers,dp_keep_prob,avg_wct,train_val,val_ppl

@@ -176,3 +176,17 @@ class Batch:
             subsequent_mask(data.size(-1)).type_as(mask.data))
         return mask
 
+
+def normalize_times(results_dir, scale):
+    learning_curves = np.load(os.path.join(results_dir, 'learning_curves.npy'))[()]
+    learning_curves['times'] = [t*2 for t in learning_curves['times']]
+
+    for epoch in range(40):
+        log_str = 'epoch: ' + str(epoch) + '\t' \
+                + 'train ppl: ' + str(learning_curves['train_ppls'][epoch]) + '\t' \
+                + 'val ppl: ' + str(learning_curves['val_ppls'][epoch])  + '\t' \
+                + 'best val: ' + str(learning_curves['best_vals'][epoch]) + '\t' \
+                + 'time (s) spent in epoch: ' + str(learning_curves['times'][epoch])
+    print(log_str)
+    with open (os.path.join(results_dir, 'log.txt'), 'a') as f_:
+        f_.write(log_str+ '\n')
