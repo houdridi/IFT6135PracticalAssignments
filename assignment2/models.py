@@ -383,6 +383,8 @@ class MultiHeadedAttention(nn.Module):
         # ETA: you can use the "clones" function we provide.
         # ETA: you can use masked_fill
 
+        # Creating 4 identical linear layers (for Qo, Ko, Vo and final output layer)
+        # with their own parameters.
         self.lin_query = nn.Linear(n_units,n_units)
         self.lin_key = nn.Linear(n_units,n_units)
         self.lin_value = nn.Linear(n_units,n_units)
@@ -390,7 +392,7 @@ class MultiHeadedAttention(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
 
-        # VERIFY IF FUNCTION IS ALLOWED
+        # Weights and biases of the linear layers initialization
         self.lin_query.weight.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
         self.lin_query.bias.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
         self.lin_key.weight.data.uniform_(-math.sqrt(1/n_units), math.sqrt(1/n_units))
@@ -409,52 +411,36 @@ class MultiHeadedAttention(nn.Module):
         # generating the "attention values" (i.e. A_i in the .tex)
         # Also apply dropout to the attention values.
 
-
-        # [batch, seq_len, units]
         # Keep batch size
         nb_batch = query.size(0)
 
         # Compute linear system for query, key and value
+        # Divide each components into d_k elements in parallel
         Qo = self.lin_query(query).view(nb_batch, -1, self.n_heads, self.d_k)
         Ko = self.lin_key(key).view(nb_batch, -1, self.n_heads, self.d_k)
         Vo = self.lin_value(value).view(nb_batch, -1, self.n_heads, self.d_k)
-        # print(self.n_units)
-        # print(query.size())
-        # print(value.size())
-        # print(Qo.size())
-        # print(Vo.size())
-        # [batch, seq_len, nb_h, q_size)
 
         # Scaled dot-product attention
         Ko = torch.transpose(Ko,1,2)
         Qo = torch.transpose(Qo,1,2)
         Vo = torch.transpose(Vo,1,2)
-        # [batch, nb_h, seq_len, q_size)
 
-        A = torch.matmul(Qo,Ko.transpose(-2, -1))   #[batch, nb_h, q_size, seq_len]
+        A = torch.matmul(Qo,Ko.transpose(-2, -1))
         A = A/math.sqrt(self.d_k)
         A = A.masked_fill(mask.unsqueeze(1) == 0, -1e9)
-        A = nn.functional.softmax(A, dim=-1)
+        A = nn.functional.softmax(A, dim=-1) # Softmax on the rightmost dimension
 
         # Dropout attention values
         A = self.dropout(A)
 
-        # print(A.size())
-        # print(Vo.size())
-
+        # Apply attention on values
         H = torch.matmul(A, Vo)
 
-        # print(H.size())
+        # Concatenate the attention heads
+        H = H.transpose(1, 2).contiguous().view(nb_batch, -1, self.n_units)
 
-        # Concatenate
-        # print(H.size()) #[batch, nb_h, seq_len, q_size]
-        H = H.transpose(1, 2).contiguous() \
-             .view(nb_batch, -1, self.n_units)
-        # print(H.size())
-
-        # Linear layer
+        # Apply linear layer on attentions
         Ao = self.lin_out(H)
-        # print(Ao.size())
 
         return Ao # size: (batch_size, seq_len, self.n_units)
 
