@@ -219,9 +219,9 @@ def graph_all_results():
     experiments = list(itertools.chain(*[get_experiments(q) for q in sections]))
 
     # 1) Plot performance for each experiment
-    # for exp in experiments:
-    #     print('Graphing performance %s' % exp)
-    #     plot_experiment_performance(exp)
+    for exp in experiments:
+        print('Graphing performance %s' % exp)
+        plot_experiment_performance(exp)
 
     # 2) Make table summarizing results
     print("Creating summary tables")
