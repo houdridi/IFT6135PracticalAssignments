@@ -241,9 +241,9 @@ def graph_all_results():
     experiments = list(itertools.chain(*[get_experiments(q) for q in sections]))
 
     # 1) Plot performance for each experiment
-    # for exp in experiments:
-    #     print('Graphing performance %s' % exp)
-    #     plot_experiment_performance(exp, y_lim=1500 if exp.model == 'TRANSFORMER' else None)
+    for exp in experiments:
+        print('Graphing performance %s' % exp)
+        plot_experiment_performance(exp, y_lim=1500 if exp.model == 'TRANSFORMER' else None)
 
     # 2) Make table summarizing results
     print("Creating summary tables")
