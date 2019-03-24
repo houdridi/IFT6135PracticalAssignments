@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 RESULTS_FOLDER = './4_plots_and_tables'
+# y_lim for rnn + sgd or composite graphs because rnn in 4.2 also reaches low 2000 at end of training
+rnn_sgd_y_lim = 3000
 
 
 class ExperimentInfo:
@@ -37,6 +39,11 @@ class ExperimentInfo:
                (self.model, self.optimizer, self.initial_lr, self.batch_size,
                 self.seq_len, self.hidden_size, self.num_layers, self.dp_keep_prob)
 
+    def split_name(self) -> str:
+        return "%s opt=%s init_lr=%s bat_sx=%s\nseq_len=%s h_sx=%s n_lyrs=%s dp_kp_prb=%s" % \
+               (self.model, self.optimizer, self.initial_lr, self.batch_size,
+                self.seq_len, self.hidden_size, self.num_layers, self.dp_keep_prob)
+
     def str_except_optimizer(self) -> str:
         return "%s init_lr=%s bat_sx=%s seq_len=%s h_sx=%s n_lyrs=%s dp_kp_prb=%s" % \
                (self.model, self.initial_lr, self.batch_size,
@@ -53,33 +60,37 @@ def get_experiments(section):
             if result_folder != 'extra']
 
 
-def plot_experiment_performance(experiment: ExperimentInfo):
+def plot_experiment_performance(experiment: ExperimentInfo, y_lim=None):
 
     # Validation + Train PPL vs Epochs
     fig = plt.figure()
     plt.plot(experiment.val_ppls, 'b-o', label="Val PPL")
-    plt.plot(experiment.train_ppls, '--o', label="Train PPL")
+    plt.plot(experiment.train_ppls, '--o', mfc='none', label="Train PPL")
     plt.legend()
-    fig.suptitle("%s\nPPL vs. Epochs" % experiment, fontsize=10)
+    fig.suptitle("%s\nPPL vs. Epochs" % experiment.split_name(), fontsize=10)
     plt.ylabel("PPL")
     plt.xlabel("Epochs")
+    if y_lim:
+        plt.ylim(0, y_lim)
     plt.savefig(os.path.join(experiment.result_folder, 'ppl_vs_epochs.png'), bbox_inches='tight', pad_inches=0.2)
     plt.savefig(os.path.join(RESULTS_FOLDER, 'experiments', '%s_ppl_vs_epochs.png' % experiment.full_name),
-                bbox_inches='tight', pad_inches=0.2)
+                bbox_inches='tight', pad_inches=0.1)
     plt.clf()
     plt.close()
 
     # Validation + Train PPL vs Wall-Clock Time
     fig = plt.figure()
     plt.plot(experiment.wct, experiment.val_ppls, 'b-o', label="Val PPL")
-    plt.plot(experiment.wct, experiment.train_ppls, '--o', label="Train PPL")
+    plt.plot(experiment.wct, experiment.train_ppls, '--o', mfc='none', label="Train PPL")
     plt.legend()
-    fig.suptitle("%s\nPPL vs. Wall-Clock Time" % experiment, fontsize=10)
+    fig.suptitle("%s\nPPL vs. Wall-Clock Time" % experiment.split_name(), fontsize=10)
     plt.ylabel("PPL")
     plt.xlabel("Wall-Clock Time")
+    if y_lim:
+        plt.ylim(0, y_lim)
     plt.savefig(os.path.join(experiment.result_folder, 'ppl_vs_wct.png'), bbox_inches='tight', pad_inches=0.2)
     plt.savefig(os.path.join(RESULTS_FOLDER, 'experiments', '%s_ppl_vs_wct.png' % experiment.full_name),
-                bbox_inches='tight', pad_inches=0.2)
+                bbox_inches='tight', pad_inches=0.1)
     plt.clf()
     plt.close()
 
@@ -140,7 +151,7 @@ def plot_valid_perf_by_optimizer(all_experiments: [ExperimentInfo], legend_size=
         opt_experiments = [e for e in all_experiments if e.optimizer == optimizer]
 
         opt_experiments.sort(key=lambda x: x.model)
-        y_lim = 3000 if optimizer == 'SGD' else (800 if optimizer == 'ADAM' else 1000)
+        y_lim = rnn_sgd_y_lim if optimizer == 'SGD' else (600 if optimizer == 'ADAM' else 1000)
 
         if not opt_experiments:
             continue
@@ -151,7 +162,7 @@ def plot_valid_perf_by_optimizer(all_experiments: [ExperimentInfo], legend_size=
             plt.plot(experiment.val_ppls, '-o', color=colors[i], alpha=0.7, label=experiment.str_except_optimizer())
 
         plt.legend(prop={'size': legend_size})
-        plt.title("%s PPL vs. Epochs" % optimizer)
+        plt.title("%s Validation PPL vs. Epochs" % optimizer)
         plt.ylabel("PPL")
         plt.xlabel("Epochs")
         plt.ylim(0, y_lim)
@@ -165,7 +176,7 @@ def plot_valid_perf_by_optimizer(all_experiments: [ExperimentInfo], legend_size=
             plt.plot(experiment.wct, experiment.val_ppls, '-o', color=colors[i], alpha=0.7, label=experiment.str_except_optimizer())
 
         plt.legend(prop={'size': legend_size})
-        plt.title("%s PPL vs. Wall-Clock Time" % optimizer)
+        plt.title("%s Validation PPL vs. Wall-Clock Time" % optimizer)
         plt.ylabel("PPL")
         plt.xlabel("Wall-Clock Time")
         plt.ylim(0, y_lim)
@@ -175,43 +186,54 @@ def plot_valid_perf_by_optimizer(all_experiments: [ExperimentInfo], legend_size=
         plt.close()
 
 
-def plot_valid_perf_by_architecture(all_experiments: [ExperimentInfo], legend_size=8):
+def plot_valid_perf_for_architecture(model_name, model_experiments, y_lim=None, legend_size=8):
+    model_experiments.sort(key=lambda x: x.optimizer)
+    colors = ['C' + str((i + 1) % 10) for i in range(len(model_experiments))]
+
+    plt.figure(figsize=(10, 6))
+    for i, experiment in enumerate(model_experiments):
+        plt.plot(experiment.val_ppls, '-o', color=colors[i], alpha=0.7, label=experiment.str_except_model())
+    plt.legend(prop={'size': legend_size})
+    plt.title("%s Validation PPL vs. Epochs" % model_name)
+    plt.ylabel("PPL")
+    plt.xlabel("Epochs")
+    if y_lim:
+        plt.ylim(0, y_lim)
+    plt.savefig(os.path.join(RESULTS_FOLDER, '%s_ppl_vs_epochs.png' % model_name.replace(' ', '_')), bbox_inches='tight',
+                pad_inches=0.2)
+    plt.clf()
+    plt.close()
+
+    plt.figure(figsize=(10, 6))
+    for i, experiment in enumerate(model_experiments):
+        plt.plot(experiment.wct, experiment.val_ppls, '-o', color=colors[i], alpha=0.7,
+                 label=experiment.str_except_model())
+
+    plt.legend(prop={'size': legend_size})
+    plt.title("%s Validation PPL vs. Wall-Clock Time" % model_name)
+    plt.ylabel("PPL")
+    plt.xlabel("Wall-Clock Time")
+    if y_lim:
+        plt.ylim(0, y_lim)
+    plt.savefig(os.path.join(RESULTS_FOLDER, '%s_ppl_vs_wct.png' % model_name.replace(' ', '_')), bbox_inches='tight',
+                pad_inches=0.2)
+    plt.clf()
+    plt.close()
+
+
+def plot_valid_perf_by_architecture(all_experiments: [ExperimentInfo]):
     models = ['RNN', 'GRU', 'TRANSFORMER']
     for model in models:
         model_experiments = [e for e in all_experiments if e.model == model]
-        y_lim = 3000 if model == 'RNN' else (1000 if model == 'TRANSFORMER' else None)
+        y_lim = rnn_sgd_y_lim if model == 'RNN' else (1000 if model == 'TRANSFORMER' else None)
         if not model_experiments:
             continue
+        plot_valid_perf_for_architecture(model, model_experiments, y_lim)
 
-        model_experiments.sort(key=lambda x: x.optimizer)
-        colors = ['C' + str((i + 1) % 10) for i in range(len(model_experiments))]
-
-        plt.figure(figsize=(10, 6))
-        for i, experiment in enumerate(model_experiments):
-            plt.plot(experiment.val_ppls, '-o', color=colors[i], alpha=0.7, label=experiment.str_except_model())
-        plt.legend(prop={'size': legend_size})
-        plt.title("%s PPL vs. Epochs" % model)
-        plt.ylabel("PPL")
-        plt.xlabel("Epochs")
-        plt.ylim(0, y_lim)
-        plt.savefig(os.path.join(RESULTS_FOLDER, '%s_ppl_vs_epochs.png' % model), bbox_inches='tight',
-                    pad_inches=0.2)
-        plt.clf()
-        plt.close()
-
-        plt.figure(figsize=(10, 6))
-        for i, experiment in enumerate(model_experiments):
-            plt.plot(experiment.wct, experiment.val_ppls, '-o', color=colors[i], alpha=0.7, label=experiment.str_except_model())
-
-        plt.legend(prop={'size': legend_size})
-        plt.title("%s PPL vs. Wall-Clock Time" % model)
-        plt.ylabel("PPL")
-        plt.xlabel("Wall-Clock Time")
-        plt.ylim(0, y_lim)
-        plt.savefig(os.path.join(RESULTS_FOLDER, '%s_ppl_vs_wct.png' % model), bbox_inches='tight',
-                    pad_inches=0.2)
-        plt.clf()
-        plt.close()
+    # Extra plot for rnn architectures excluding outlier
+    rnn_experiments_without_outlier = [e for e in all_experiments if e.model == 'RNN' if not (e.optimizer == 'SGD'
+                                       and e.initial_lr == '0.0001')]
+    plot_valid_perf_for_architecture('RNN without outlier', rnn_experiments_without_outlier)
 
 
 def graph_all_results():
@@ -219,9 +241,9 @@ def graph_all_results():
     experiments = list(itertools.chain(*[get_experiments(q) for q in sections]))
 
     # 1) Plot performance for each experiment
-    for exp in experiments:
-        print('Graphing performance %s' % exp)
-        plot_experiment_performance(exp)
+    # for exp in experiments:
+    #     print('Graphing performance %s' % exp)
+    #     plot_experiment_performance(exp, y_lim=1500 if exp.model == 'TRANSFORMER' else None)
 
     # 2) Make table summarizing results
     print("Creating summary tables")
@@ -255,7 +277,7 @@ def graph_all_results():
     print("Graphing results per section")
     for section in sections[:-1]:
         section_experiments = [e for e in experiments if e.section == section]
-        plot_section_results(section, section_experiments, y_lim=3000 if section == '4_2' else 1000)
+        plot_section_results(section, section_experiments, y_lim=rnn_sgd_y_lim if section == '4_2' else 1000)
 
     # 4) Validation ppl curves by optimizer
     print("Graphing results per optimizer")
