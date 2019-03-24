@@ -35,22 +35,22 @@ class ExperimentInfo:
         self.best_valid_train_ppl = self.train_ppls[min_valid_ppls_idx]
 
     def __str__(self) -> str:
-        return "%s opt=%s init_lr=%s bat_sx=%s seq_len=%s h_sx=%s n_lyrs=%s dp_kp_prb=%s" % \
+        return "%s opt=%s init_lr=%s bat_sz=%s seq_len=%s h_sz=%s n_lyrs=%s dp_kp_prb=%s" % \
                (self.model, self.optimizer, self.initial_lr, self.batch_size,
                 self.seq_len, self.hidden_size, self.num_layers, self.dp_keep_prob)
 
     def split_name(self) -> str:
-        return "%s opt=%s init_lr=%s bat_sx=%s\nseq_len=%s h_sx=%s n_lyrs=%s dp_kp_prb=%s" % \
+        return "%s opt=%s init_lr=%s bat_sz=%s\nseq_len=%s h_sz=%s n_lyrs=%s dp_kp_prb=%s" % \
                (self.model, self.optimizer, self.initial_lr, self.batch_size,
                 self.seq_len, self.hidden_size, self.num_layers, self.dp_keep_prob)
 
     def str_except_optimizer(self) -> str:
-        return "%s init_lr=%s bat_sx=%s seq_len=%s h_sx=%s n_lyrs=%s dp_kp_prb=%s" % \
+        return "%s init_lr=%s bat_sz=%s seq_len=%s h_sz=%s n_lyrs=%s dp_kp_prb=%s" % \
                (self.model, self.initial_lr, self.batch_size,
                 self.seq_len, self.hidden_size, self.num_layers, self.dp_keep_prob)
 
     def str_except_model(self) -> str:
-        return "%s init_lr=%s bat_sx=%s seq_len=%s h_sx=%s n_lyrs=%s dp_kp_prb=%s" % \
+        return "%s init_lr=%s bat_sz=%s seq_len=%s h_sz=%s n_lyrs=%s dp_kp_prb=%s" % \
                (self.optimizer, self.initial_lr, self.batch_size,
                 self.seq_len, self.hidden_size, self.num_layers, self.dp_keep_prob)
 
