@@ -50,7 +50,7 @@ def plot_loss_per_step(model_infos, grads_by_model):
     for model_info, grads in zip(model_infos, grads_by_model):
         grads = minmax_scale(grads)
         plt.plot(x, grads, '-o', label=model_info.model)
-    plt.title("$h_t$ Gradient Normal Vs. Timestep")
+    plt.title("$\\nabla h_t L_T$ Gradient Normal Vs. Timestep")
     plt.ylabel("Gradient Norm (Scaled)")
     plt.xlabel("Timestep")
     plt.legend()

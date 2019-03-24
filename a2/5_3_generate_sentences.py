@@ -4,22 +4,26 @@ from ptb_common import ptb_raw_data, load_model, init_device, ModelInfo
 from itertools import product
 import os
 
-# See for reproducibility
-torch.manual_seed(25)
 
-
-def generate_sentences(model_info, device, seq_len, batch_size=10, start_word="<eos>", results_folder='./5_results'):
+def generate_sentences(model_info, device, seq_len, batch_size=10, start_word=None, results_folder='./5_results'):
 
     train_data, valid_data, test_data, word_to_id, id_2_word = ptb_raw_data(data_path='data')
     vocab_size = len(word_to_id)
-    start_input = torch.LongTensor(np.ones(batch_size) * word_to_id[start_word])
+
+    if start_word:
+        start_input = torch.LongTensor(np.ones(batch_size) * word_to_id[start_word])
+    else:
+        start_input = torch.LongTensor([np.random.randint(vocab_size) for _ in range(batch_size)])
+
     model = load_model(model_info, device, vocab_size=vocab_size, load_on_device=False)
 
     hidden = torch.zeros(model.num_layers, batch_size, model.hidden_size)
     samples = model.generate(start_input, hidden, seq_len).numpy()
+    start_ids = start_input.tolist()
     generated_sentences = []
+
     for i in range(batch_size):
-        sentence = " ".join([starting_word] + [id_2_word[s] for s in samples[:, i]])
+        sentence = " ".join([id_2_word[start_ids[i]]] + [id_2_word[sample] for sample in samples[:, i]])
         generated_sentences.append(sentence)
 
     with open(os.path.join(results_folder, '%s_%s_generated_samples.txt' % (model_info.model, seq_len)), 'w') as f:
@@ -35,6 +39,10 @@ if __name__ == "__main__":
     # Models from section 4.1
     models = [ModelInfo('RNN', 'ADAM', 0.0001, 20, 35, 1500, 2, 0.35),
               ModelInfo('GRU', 'SGD_LR_SCHEDULE', 10, 20, 35, 1500, 2, 0.35)]
+
+    # See for reproducibility
+    torch.manual_seed(25)
+    np.random.seed(25)
 
     print("Generating sentences")
     device = init_device()
