@@ -273,19 +273,19 @@ def graph_all_results():
 
     df.drop(['section'], axis=1).to_csv(os.path.join(RESULTS_FOLDER, 'results_table.csv'), index=False)
 
-    # 3) Plot section results
-    print("Graphing results per section")
-    for section in sections[:-1]:
-        section_experiments = [e for e in experiments if e.section == section]
-        plot_section_results(section, section_experiments, y_lim=rnn_sgd_y_lim if section == '4_2' else 1000)
-
-    # 4) Validation ppl curves by optimizer
-    print("Graphing results per optimizer")
-    plot_valid_perf_by_optimizer(experiments)
-
-    # 5) Validation ppl curves by architecture
-    print("Graphing results per architecture")
-    plot_valid_perf_by_architecture(experiments)
+    # # 3) Plot section results
+    # print("Graphing results per section")
+    # for section in sections[:-1]:
+    #     section_experiments = [e for e in experiments if e.section == section]
+    #     plot_section_results(section, section_experiments, y_lim=rnn_sgd_y_lim if section == '4_2' else 1000)
+    #
+    # # 4) Validation ppl curves by optimizer
+    # print("Graphing results per optimizer")
+    # plot_valid_perf_by_optimizer(experiments)
+    #
+    # # 5) Validation ppl curves by architecture
+    # print("Graphing results per architecture")
+    # plot_valid_perf_by_architecture(experiments)
 
 
 if __name__ == '__main__':
