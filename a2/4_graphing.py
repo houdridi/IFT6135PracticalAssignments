@@ -248,10 +248,9 @@ def graph_all_results():
     # 2) Make table summarizing results
     print("Creating summary tables")
     df = pd.DataFrame(columns=['model', 'optimizer', 'initial_lr', 'batch_size', 'seq_len', 'hidden_size', 'num_layers',
-                               'dp_keep_prob'])
+                               'dp_keep_prob', 'avg_wct', 'train_val', 'val_ppl', 'section'])
     for exp in experiments:
         df = df.append({
-            'section': exp.section,
             'model': exp.model,
             'optimizer': exp.optimizer,
             'initial_lr': exp.initial_lr,
@@ -260,9 +259,10 @@ def graph_all_results():
             'hidden_size': exp.hidden_size,
             'num_layers': exp.num_layers,
             'dp_keep_prob': exp.dp_keep_prob,
+            'avg_wct': np.mean(exp.times).round(2),
             'train_val': exp.best_valid_train_ppl,
             'val_ppl': exp.best_valid_ppl,
-            'avg_wct': np.mean(exp.times).round(2)
+            'section': exp.section,
         }, ignore_index=True)
 
     df = df.sort_values(by=['model', 'optimizer', 'val_ppl'])
@@ -271,9 +271,9 @@ def graph_all_results():
         df.loc[df['section'] == section].drop(['section'], axis=1) \
             .to_csv(os.path.join(RESULTS_FOLDER, '{}_results_table.csv'.format(section)), index=False)
 
-    df.drop(['section'], axis=1).to_csv(os.path.join(RESULTS_FOLDER, 'results_table.csv'), index=False)
+    df.to_csv(os.path.join(RESULTS_FOLDER, 'results_table.csv'), index=False)
 
-    # # 3) Plot section results
+    # 3) Plot section results
     print("Graphing results per section")
     for section in sections[:-1]:
         section_experiments = [e for e in experiments if e.section == section]
